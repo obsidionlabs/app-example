@@ -48,7 +48,7 @@ export function Example() {
 	const account = useAccount(sdk);
 
 	const TOKEN_ADDRESS =
-		"0x1be76c4cb991a0a8d372ee2a53f8f72db8bed356436db954fa774eac8cd23881";
+		"0x152c319e1a9cadcbd16e62f3ae240be7cb64dabb1bfdae9c61aadcb7d4b57836";
 	const [loading, setLoading] = useState<boolean>(false);
 
 	const handleConnect = async () => {
