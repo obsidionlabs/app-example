@@ -44,11 +44,10 @@ const sdk = new ObsidionWalletSDK(pxe, {
 });
 
 export function Example() {
-	// const [account, setAccount] = useState<Eip1193Account | null>(null);
 	const account = useAccount(sdk);
 
 	const TOKEN_ADDRESS =
-		"0x152c319e1a9cadcbd16e62f3ae240be7cb64dabb1bfdae9c61aadcb7d4b57836";
+		"0x2d37a44a3777b7d17adb67549db85a00b7c393744fadb4148b796ab2a5072fcf";
 	const [loading, setLoading] = useState<boolean>(false);
 
 	const handleConnect = async () => {
@@ -67,6 +66,10 @@ export function Example() {
 		setLoading(false);
 	};
 
+	const handleDisconnect = async () => {
+		await sdk.disconnect();
+	};
+
 	const handleSendTx = async () => {
 		if (!account) return;
 		setLoading(true);
@@ -76,11 +79,16 @@ export function Example() {
 			AztecAddress.fromString(TOKEN_ADDRESS),
 			account
 		);
-		console.log("sending tokne");
+		console.log("sending token");
 
 		const txHash = await tokenContract
 			.withWallet(account)
-			.methods.transfer_public(account.getAddress(), accs[1].getAddress(), 1, 0)
+			.methods.transfer_in_public(
+				account.getAddress(),
+				accs[1].getAddress(),
+				1e18,
+				0
+			)
 			.send()
 			.wait();
 
@@ -98,9 +106,11 @@ export function Example() {
 			{account ? (
 				<>
 					<Text size="sm">Account: {account.getAddress().toString()}</Text>
+					<Text size="sm">Token: {TOKEN_ADDRESS}</Text>
 					<Button mt={10} onClick={handleSendTx}>
-						Send Token
+						Send Token (Public)
 					</Button>
+					<Button onClick={handleDisconnect}>Disconnect</Button>
 				</>
 			) : (
 				<>
