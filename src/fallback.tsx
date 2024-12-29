@@ -1,4 +1,3 @@
-import { ObsidionWalletSDK } from "@obsidion/wallet-sdk"
 import { toast, ToastContent, ToastOptions } from "react-toastify"
 
 interface ConfirmToastProps {
