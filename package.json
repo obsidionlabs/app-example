@@ -19,7 +19,7 @@
     "@mantine/core": "^7.3.2",
     "@mantine/hooks": "^7.3.2",
     "@mantine/notifications": "^7.3.2",
-    "@obsidion/wallet-sdk": "file:../../../aztec-wallet-sdk",
+    "@obsidion/wallet-sdk": "https://github.com/olehmisar/aztec-wallet-sdk.git#module",
     "@tabler/icons-react": "^2.47.0",
     "ethers": "^6.12.2",
     "firebase": "^10.14.0",
