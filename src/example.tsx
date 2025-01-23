@@ -1,133 +1,232 @@
 import { useEffect, useState } from "react"
-import { Button, Stack, Text, TextInput } from "@mantine/core"
+import { Button, Loader, Stack, Text, TextInput } from "@mantine/core"
 import { AztecAddress, createPXEClient } from "@aztec/aztec.js"
-import { ObsidionWalletSDK } from "@obsidion/wallet-sdk"
-import { TokenContract } from "@aztec/noir-contracts.js/Token"
-import { useAccount } from "./react"
+import { TokenContract, TokenContractArtifact } from "@aztec/noir-contracts.js/Token"
 import { getDeployedTestAccountsWallets } from "@aztec/accounts/testing"
+import { Contract } from "@obsidion/wallet-sdk/eip1193"
+import { useAccount } from "./react"
+import { PopupWalletSdk } from "@obsidion/wallet-sdk"
 import { fallbackOpenPopup } from "./fallback"
-
-const OBSIDON_WALLET_URL = "http://localhost:5173"
 const PXE_URL = "http://localhost:8080"
-const pxe = createPXEClient(PXE_URL)
 
-const sdk = new ObsidionWalletSDK(pxe, {
+const pxe = createPXEClient(PXE_URL)
+const sdk = new PopupWalletSdk(pxe, {
   fallbackOpenPopup: fallbackOpenPopup,
-  walletUrl: OBSIDON_WALLET_URL,
+  walletUrl: "http://localhost:5173",
 })
 
 export function Example() {
   const account = useAccount(sdk)
 
-  const [tokenContract, setTokenContract] = useState<TokenContract | null>(null)
-  const [tokenAddress, setTokenAddress] = useState<string | null>(null)
+  const [tokenContract, setTokenContract] = useState<Contract<TokenContract> | null>(null)
+  const [tokenAddress, setTokenAddress] = useState<string | null>(() => {
+    return localStorage.getItem("tokenAddress")
+  })
+
+  const [privateBalance, setPrivateBalance] = useState<string | null>(null)
+  const [publicBalance, setPublicBalance] = useState<string | null>(null)
+
   const [amount, setAmount] = useState<string | null>(null)
+  const [recipient, setRecipient] = useState<string | null>(null)
+
   const [loading, setLoading] = useState<boolean>(false)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    localStorage.setItem("tokenAddress", tokenAddress || "")
+  }, [tokenAddress])
+
+  // const handleFetchBalances = async () => {
+  //   console.log("fetching balances...")
+  //   console.log("account: ", account)
+  //   console.log("tokenContract: ", tokenContract)
+  //   if (!account) return
+  //   if (!tokenContract) return
+
+  //   const privateBalance = await tokenContract.methods
+  //     .balance_of_private(account.getAddress())
+  //     .simulate()
+  //   console.log("privateBalance: ", privateBalance)
+
+  //   const deployer = (await getDeployedTestAccountsWallets(pxe))[0]
+  //   const token = await TokenContract.at(tokenContract.address, deployer)
+  //   const publicBalance = await token.methods.balance_of_public(account.getAddress()).simulate()
+
+  //   setPublicBalance(((publicBalance as unknown as bigint) / BigInt(1e18)).toString())
+  //   setPrivateBalance(((privateBalance as unknown as bigint) / BigInt(1e18)).toString())
+  // }
+
+  // useEffect(() => {
+  //   if (account && tokenContract) {
+  //     handleFetchBalances()
+  //   }
+  // }, [account, tokenContract])
 
   useEffect(() => {
     if (tokenAddress && account) {
       const initTokenContract = async () => {
-        const tokenContract = await TokenContract.at(AztecAddress.fromString(tokenAddress), account)
+        const Token = Contract.fromAztec(TokenContract, TokenContractArtifact)
+        const tokenContract = await Token.at(AztecAddress.fromString(tokenAddress), account)
         setTokenContract(tokenContract)
       }
       initTokenContract()
     }
   }, [tokenAddress, account])
 
-  const handleConnect = async () => {
-    setLoading(true)
-    console.log("window.location.host: ", window.location.host)
-
-    console.log("Clicked!")
-    console.log("sdk: ", sdk)
-
-    const account = await sdk.connect()
-
-    console.log("account: ", account)
-
-    if (!account) return
-    // setAccount(account);
-    setLoading(false)
-  }
-
-  const handleDisconnect = async () => {
-    await sdk.disconnect()
-    setTokenContract(null)
-    setTokenAddress(null)
-  }
-
   const handleSendTx = async (isPrivate: boolean) => {
-    if (!account) return
     setLoading(true)
-    const accs = await getDeployedTestAccountsWallets(pxe)
+    setError(null)
+    if (!account) {
+      setError("Account not found")
+      setLoading(false)
+      return
+    }
 
-    if (!tokenContract) return
+    if (!tokenContract) {
+      setError("Token contract not found")
+      setLoading(false)
+      return
+    }
 
-    if (!amount) return
+    if (!amount) {
+      setError("Amount is required")
+      setLoading(false)
+      return
+    }
+
+    if (!recipient) {
+      setError("Recipient is required")
+      setLoading(false)
+      return
+    }
 
     console.log("sending token")
 
-    const txHash = await tokenContract
-      .withWallet(account)
-      .methods[isPrivate ? "transfer_in_private" : "transfer_in_public"](
-        account.getAddress(),
-        accs[1].getAddress(),
-        BigInt(amount) * BigInt(1e18),
-        0,
-      )
+    try {
+      const txHash = await tokenContract.methods[
+        isPrivate ? "transfer_in_private" : "transfer_in_public"
+      ](account.getAddress(), AztecAddress.fromString(recipient), BigInt(amount) * BigInt(1e18), 0)
+        .send()
+        .wait()
+      console.log("txHash: ", txHash)
+    } catch (e) {
+      setError("Error sending transaction")
+      setLoading(false)
+      return
+    }
+
+    setLoading(false)
+    // handleFetchBalances()
+  }
+
+  const handleMintToken = async () => {
+    if (!account) {
+      setError("Account not found")
+      setLoading(false)
+      return
+    }
+
+    setLoading(true)
+
+    const deployer = (await getDeployedTestAccountsWallets(pxe))[0]
+    const deployTx = await TokenContract.deploy(
+      deployer,
+      deployer.getAddress(),
+      "Token",
+      "TEST",
+      18n,
+    )
       .send()
       .wait()
+    console.log("deployTx: ", deployTx)
 
-    // console.log("txHash: ", txHash.txHash.toString());
-    console.log("txHash: ", txHash)
+    const tokenContract = deployTx.contract
+    await tokenContract.methods
+      .mint_to_private(deployer.getAddress(), deployer.getAddress(), 1000e18)
+      .send()
+      .wait()
+    await tokenContract.methods
+      .transfer_in_private(deployer.getAddress(), account.address, 1000e18, 0)
+      .send()
+      .wait()
+    await tokenContract.methods.mint_to_public(account.address, 1000e18).send().wait()
+
+    const Token = Contract.fromAztec(TokenContract, TokenContractArtifact)
+    const token = await Token.at(tokenContract.address, account)
+    setTokenContract(token)
+    setTokenAddress(tokenContract.address.toString())
     setLoading(false)
+    // handleFetchBalances()
   }
 
   return (
     <Stack align="center" justify="space-between" gap="md" mt={100}>
       <Text mb={30} size="30px">
-        Example App for Token Transfer
+        Example Token App
       </Text>
 
       {account ? (
         <>
-          <Text size="sm">Account: {account.getAddress().toString()}</Text>
-
+          <Text size="sm">Connected Account: {account.getAddress().toString()}</Text>
           {tokenContract && tokenAddress ? (
             <>
               <Text size="sm">Token: {tokenAddress}</Text>
+              {/* <div style={{ display: "flex", gap: 10 }}>
+                <Text>Private Balance: {privateBalance ? `${privateBalance} TEST` : "0 TEST"}</Text>
+                <Text>Public Balance: {publicBalance ? `${publicBalance} TEST` : "0 TEST"}</Text>
+              </div> */}
+
               <TextInput
                 style={{ width: "50%" }}
                 placeholder="Amount"
                 value={amount || ""}
                 onChange={(e) => setAmount(e.target.value)}
               />
-              <div style={{ display: "flex", gap: 10 }}>
-                <Button mt={10} onClick={() => handleSendTx(true)}>
+
+              <TextInput
+                style={{ width: "50%" }}
+                placeholder="Recipient"
+                value={recipient || ""}
+                onChange={(e) => setRecipient(e.target.value)}
+              />
+              <div style={{ display: "flex", gap: 20 }}>
+                <Button mt={10} disabled={loading} onClick={() => handleSendTx(true)}>
                   Send Token (Private)
                 </Button>
-                <Button mt={10} onClick={() => handleSendTx(false)}>
+                <Button mt={10} disabled={loading} onClick={() => handleSendTx(false)}>
                   Send Token (Public)
                 </Button>
               </div>
+              {/* <Button mt={10} onClick={() => handleFetchBalances()}>
+                Fetch Balances
+              </Button> */}
+              {error && <Text color="red">{error}</Text>}
             </>
           ) : (
-            // make the input wider
-            <TextInput
-              style={{ width: "50%" }}
-              placeholder="Token Address"
-              value={tokenAddress || ""}
-              onChange={(e) => setTokenAddress(e.target.value)}
-            />
+            <>
+              <TextInput
+                label="Token Address"
+                style={{ width: "50%" }}
+                placeholder="0x..."
+                value={tokenAddress || ""}
+                onChange={(e) => {
+                  setTokenAddress(e.target.value)
+                  localStorage.setItem("tokenAddress", e.target.value)
+                }}
+              />
+              <div style={{ display: "flex", gap: 20 }}>
+                <Button mt={10} disabled={loading} onClick={() => handleMintToken()}>
+                  Deploy & Mint Token
+                </Button>
+              </div>
+              {error && <Text color="red">{error}</Text>}
+            </>
           )}
-          <Button onClick={handleDisconnect}>Disconnect</Button>
         </>
       ) : (
-        <>
-          <Button onClick={handleConnect}>Connect</Button>
-        </>
+        <Button onClick={() => sdk?.connect()}>Connect</Button>
       )}
-      {loading && <Text>Loading...</Text>}
+      {loading && <Loader mt={10} size="sm" />}
     </Stack>
   )
 }
