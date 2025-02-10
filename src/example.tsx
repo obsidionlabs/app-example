@@ -4,7 +4,7 @@ import { AztecAddress, createPXEClient } from "@aztec/aztec.js"
 import { TokenContract, TokenContractArtifact } from "@aztec/noir-contracts.js/Token"
 import { getDeployedTestAccountsWallets } from "@aztec/accounts/testing"
 import { Contract } from "@obsidion/wallet-sdk/eip1193"
-import { useAccount } from "./react"
+import { useAccount } from "@obsidion/wallet-sdk/react"
 import { PopupWalletSdk } from "@obsidion/wallet-sdk"
 import { fallbackOpenPopup } from "./fallback"
 const PXE_URL = "http://localhost:8080"
@@ -224,7 +224,16 @@ export function Example() {
           )}
         </>
       ) : (
-        <Button onClick={() => sdk?.connect()}>Connect</Button>
+        <Button
+          onClick={async () => {
+            if (!sdk) return
+            console.log("connecting...")
+            const account = await sdk.connect()
+            console.log("account: ", account)
+          }}
+        >
+          Connect
+        </Button>
       )}
       {loading && <Loader mt={10} size="sm" />}
     </Stack>

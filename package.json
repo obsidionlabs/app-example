@@ -13,6 +13,7 @@
   "dependencies": {
     "@aztec/accounts": "0.75.0",
     "@aztec/aztec.js": "0.75.0",
+    "@aztec/circuit-types": "0.75.0",
     "@aztec/circuits.js": "0.75.0",
     "@aztec/foundation": "0.75.0",
     "@aztec/noir-contracts.js": "0.75.0",
@@ -51,6 +52,7 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-toastify": "^10.0.4",
+    "ts-essentials": "^9.4.1",
     "ts-node": "^10.9.1",
     "typescript": "5.0.4",
     "vite": "^5.4.0",
