@@ -13,28 +13,8 @@ export default defineConfig({
       : undefined,
     nodePolyfills({ protocolImports: true }),
   ].filter(Boolean),
-  resolve: {
-    alias: {
-      "fs/promises": "node:fs/promises",
-      "fs": "node:fs",
-      "path": "node:path",
-    },
-  },
-  build: {
-    target: "esnext",
-    sourcemap: true,
-    minify: false,
-  },
   base: "/",
-  optimizeDeps: {
-    esbuildOptions: {
-      target: "esnext",
-      sourcemap: true,
-      minify: false,
-    },
-  },
   server: {
-    /// host: "myapp.local", // or use 'localhost' for local development
-    port: 3000, // specify the port you want to use
+    port: 3000,
   },
 })

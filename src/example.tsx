@@ -3,17 +3,29 @@ import { Button, Loader, Stack, Text, TextInput } from "@mantine/core"
 import { AztecAddress, createPXEClient } from "@aztec/aztec.js"
 import { TokenContract, TokenContractArtifact } from "@aztec/noir-contracts.js/Token"
 import { getDeployedTestAccountsWallets } from "@aztec/accounts/testing"
-import { Contract } from "@obsidion/wallet-sdk/eip1193"
-import { useAccount } from "@obsidion/wallet-sdk/react"
-import { PopupWalletSdk } from "@obsidion/wallet-sdk"
+import { Contract } from "@shieldswap/wallet-sdk/eip1193"
+import { useAccount } from "@shieldswap/wallet-sdk/react"
+import { ReownPopupWalletSdk } from "@shieldswap/wallet-sdk"
 import { fallbackOpenPopup } from "./fallback"
+
 const PXE_URL = "http://localhost:8080"
+// const PXE_URL = "https://pxe.obsidion.xyz"
 
 const pxe = createPXEClient(PXE_URL)
-const sdk = new PopupWalletSdk(pxe, {
-  fallbackOpenPopup: fallbackOpenPopup,
+
+const wcOptions = {
+  projectId: "067a11239d95dd939ee98ea22bde21da",
+}
+
+const params = {
   walletUrl: "http://localhost:5173",
-})
+  fallbackOpenPopup: fallbackOpenPopup,
+}
+
+const sdk = new ReownPopupWalletSdk(pxe, wcOptions, params)
+// const sdk = new PopupWalletSdk(pxe, {
+//   fallbackOpenPopup: fallbackOpenPopup,
+// })
 
 export function Example() {
   const account = useAccount(sdk)
@@ -36,31 +48,31 @@ export function Example() {
     localStorage.setItem("tokenAddress", tokenAddress || "")
   }, [tokenAddress])
 
-  // const handleFetchBalances = async () => {
-  //   console.log("fetching balances...")
-  //   console.log("account: ", account)
-  //   console.log("tokenContract: ", tokenContract)
-  //   if (!account) return
-  //   if (!tokenContract) return
+  const handleFetchBalances = async () => {
+    console.log("fetching balances...")
+    console.log("account: ", account)
+    console.log("tokenContract: ", tokenContract)
+    if (!account) return
+    if (!tokenContract) return
 
-  //   const privateBalance = await tokenContract.methods
-  //     .balance_of_private(account.getAddress())
-  //     .simulate()
-  //   console.log("privateBalance: ", privateBalance)
+    const privateBalance = await tokenContract.methods
+      .balance_of_private(account.getAddress())
+      .simulate()
+    console.log("privateBalance: ", privateBalance)
 
-  //   const deployer = (await getDeployedTestAccountsWallets(pxe))[0]
-  //   const token = await TokenContract.at(tokenContract.address, deployer)
-  //   const publicBalance = await token.methods.balance_of_public(account.getAddress()).simulate()
+    const deployer = (await getDeployedTestAccountsWallets(pxe))[0]
+    const token = await TokenContract.at(tokenContract.address, deployer)
+    const publicBalance = await token.methods.balance_of_public(account.getAddress()).simulate()
 
-  //   setPublicBalance(((publicBalance as unknown as bigint) / BigInt(1e18)).toString())
-  //   setPrivateBalance(((privateBalance as unknown as bigint) / BigInt(1e18)).toString())
-  // }
+    setPublicBalance(((publicBalance as unknown as bigint) / BigInt(1e18)).toString())
+    setPrivateBalance(((privateBalance as unknown as bigint) / BigInt(1e18)).toString())
+  }
 
-  // useEffect(() => {
-  //   if (account && tokenContract) {
-  //     handleFetchBalances()
-  //   }
-  // }, [account, tokenContract])
+  useEffect(() => {
+    if (account && tokenContract) {
+      handleFetchBalances()
+    }
+  }, [account, tokenContract])
 
   useEffect(() => {
     if (tokenAddress && account) {
@@ -116,7 +128,7 @@ export function Example() {
     }
 
     setLoading(false)
-    // handleFetchBalances()
+    handleFetchBalances()
   }
 
   const handleMintToken = async () => {
@@ -156,7 +168,7 @@ export function Example() {
     setTokenContract(token)
     setTokenAddress(tokenContract.address.toString())
     setLoading(false)
-    // handleFetchBalances()
+    handleFetchBalances()
   }
 
   return (
@@ -171,10 +183,10 @@ export function Example() {
           {tokenContract && tokenAddress ? (
             <>
               <Text size="sm">Token: {tokenAddress}</Text>
-              {/* <div style={{ display: "flex", gap: 10 }}>
+              <div style={{ display: "flex", gap: 10 }}>
                 <Text>Private Balance: {privateBalance ? `${privateBalance} TEST` : "0 TEST"}</Text>
                 <Text>Public Balance: {publicBalance ? `${publicBalance} TEST` : "0 TEST"}</Text>
-              </div> */}
+              </div>
 
               <TextInput
                 style={{ width: "50%" }}
@@ -197,9 +209,9 @@ export function Example() {
                   Send Token (Public)
                 </Button>
               </div>
-              {/* <Button mt={10} onClick={() => handleFetchBalances()}>
+              <Button mt={10} onClick={() => handleFetchBalances()}>
                 Fetch Balances
-              </Button> */}
+              </Button>
               {error && <Text color="red">{error}</Text>}
             </>
           ) : (

@@ -8,26 +8,19 @@
     "lint:eslint": "eslint . --cache --ext js,ts",
     "lint:fix": "yarn lint:eslint --fix && yarn lint:misc --write",
     "dev": "vite",
-    "build": "tsc && vite build"
+    "build": "vite build"
   },
   "dependencies": {
     "@aztec/accounts": "0.75.0",
     "@aztec/aztec.js": "0.75.0",
-    "@aztec/circuit-types": "0.75.0",
-    "@aztec/circuits.js": "0.75.0",
-    "@aztec/foundation": "0.75.0",
     "@aztec/noir-contracts.js": "0.75.0",
     "@mantine/core": "^7.3.2",
     "@mantine/hooks": "^7.3.2",
     "@mantine/notifications": "^7.3.2",
-    "@obsidion/wallet-sdk": "github:olehmisar/aztec-wallet-sdk",
-    "@tabler/icons-react": "^2.47.0",
-    "ethers": "^6.12.2",
-    "firebase": "^10.14.0",
+    "@shieldswap/wallet-sdk": "0.75.0-obsidion.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.22.3",
-    "tabler-icons-react": "^1.56.0",
     "toast": "^0.5.4"
   },
   "devDependencies": {
