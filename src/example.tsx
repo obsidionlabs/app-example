@@ -8,9 +8,7 @@ import { useAccount } from "@shieldswap/wallet-sdk/react"
 import { ReownPopupWalletSdk } from "@shieldswap/wallet-sdk"
 import { fallbackOpenPopup } from "./fallback"
 
-const PXE_URL = "http://localhost:8080"
-// const PXE_URL = "https://pxe.obsidion.xyz"
-
+const PXE_URL = "http://localhost:8080" // or "https://pxe.obsidion.xyz"
 const pxe = createPXEClient(PXE_URL)
 
 const wcOptions = {
@@ -23,9 +21,6 @@ const params = {
 }
 
 const sdk = new ReownPopupWalletSdk(pxe, wcOptions, params)
-// const sdk = new PopupWalletSdk(pxe, {
-//   fallbackOpenPopup: fallbackOpenPopup,
-// })
 
 export function Example() {
   const account = useAccount(sdk)
@@ -238,7 +233,6 @@ export function Example() {
       ) : (
         <Button
           onClick={async () => {
-            if (!sdk) return
             console.log("connecting...")
             const account = await sdk.connect()
             console.log("account: ", account)
