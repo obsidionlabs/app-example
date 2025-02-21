@@ -9,6 +9,7 @@ import { ReownPopupWalletSdk } from "@shieldswap/wallet-sdk"
 import { fallbackOpenPopup } from "./fallback"
 
 const PXE_URL = "http://localhost:8080" // or "https://pxe.obsidion.xyz"
+// const PXE_URL = "https://pxe.obsidion.xyz"
 const pxe = createPXEClient(PXE_URL)
 
 const wcOptions = {
@@ -42,6 +43,25 @@ export function Example() {
   useEffect(() => {
     localStorage.setItem("tokenAddress", tokenAddress || "")
   }, [tokenAddress])
+
+  const handleAddToken = async () => {
+    console.log("adding token...")
+    console.log("account: ", account)
+    console.log("tokenContract: ", tokenContract)
+
+    await sdk.watchAssets([
+      {
+        type: "ARC20",
+        options: {
+          address: tokenAddress!,
+          name: "TEST",
+          symbol: "TEST",
+          decimals: 18,
+          image: "",
+        },
+      },
+    ])
+  }
 
   const handleFetchBalances = async () => {
     console.log("fetching balances...")
@@ -206,6 +226,9 @@ export function Example() {
               </div>
               <Button mt={10} onClick={() => handleFetchBalances()}>
                 Fetch Balances
+              </Button>
+              <Button mt={10} onClick={() => handleAddToken()}>
+                Add Token
               </Button>
               {error && <Text color="red">{error}</Text>}
             </>
