@@ -6,12 +6,12 @@
 - Our hosted PXE url: https://pxe.obsidion.xyz/
 - aztec-package/sandbox version: _0.76.1_
 - wallet sdk: https://www.npmjs.com/package/@shieldswap/wallet-sdk
-  - \*use 0.76.1-obsidion.1 version of this sdk.
+  - \*use 0.76.1-obsidion.9 version of this sdk.
 
 ### 1. install obsidion wallet sdk
 
 ```shell
-pnpm i @shieldswap/wallet-sdk@0.76.1-obsidion.4
+pnpm i @shieldswap/wallet-sdk@0.76.1-obsidion.9
 ```
 
 ### 2. how to use sdk
@@ -76,8 +76,23 @@ not supported yet.
 
 #### Wallet Connect Issues
 
-If you encounter any error with wallet connect, please delete all the cache under indexedDB ->
-WALLET_CONNECT_V2_INDEXED_DB in local storage.
+example:
+
+```shell
+{context: 'client'}  Error: No matching key. history: 1740320789580213
+```
+
+If you encounter any error with wallet connect, pleasetry the following:
+
+1. disconnect() with `sdk.disconnect()`
+2. delete all the cache under indexedDB -> WALLET_CONNECT_V2_INDEXED_DB in local storage in your app
+   site.
+3. clear wallet connect cache for wallet site too.
+
+#### simulate() with `aztec_call` not working
+
+If simulate() with `aztec_call` not working and it's not resolved even after clearing wallet connect
+cache, there is a chance that you open either obsidion wallet tab or app tab in multiple tabs.
 
 #### CORS error with your local sandbox.
 

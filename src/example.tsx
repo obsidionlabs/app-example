@@ -1,12 +1,17 @@
 import { useEffect, useState } from "react"
-import { Button, Loader, Stack, Text, TextInput } from "@mantine/core"
-import { AztecAddress, createPXEClient } from "@aztec/aztec.js"
+import { Button, Checkbox, Loader, Stack, Text, TextInput } from "@mantine/core"
+import { AztecAddress, createPXEClient, FunctionCall } from "@aztec/aztec.js"
 import { TokenContract, TokenContractArtifact } from "@aztec/noir-contracts.js/Token"
 import { getDeployedTestAccountsWallets } from "@aztec/accounts/testing"
 import { Contract } from "@shieldswap/wallet-sdk/eip1193"
 import { useAccount } from "@shieldswap/wallet-sdk/react"
 import { ReownPopupWalletSdk } from "@shieldswap/wallet-sdk"
 import { fallbackOpenPopup } from "./fallback"
+
+export type IntentAction = {
+  caller: AztecAddress
+  action: FunctionCall
+}
 
 const PXE_URL = "http://localhost:8080" // or "https://pxe.obsidion.xyz"
 // const PXE_URL = "https://pxe.obsidion.xyz"
@@ -36,7 +41,7 @@ export function Example() {
 
   const [amount, setAmount] = useState<string | null>(null)
   const [recipient, setRecipient] = useState<string | null>(null)
-
+  const [withAuthWitness, setWithAuthWitness] = useState<boolean>(false)
   const [loading, setLoading] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -49,11 +54,16 @@ export function Example() {
     console.log("account: ", account)
     console.log("tokenContract: ", tokenContract)
 
+    if (!tokenAddress) {
+      setError("Token address not found")
+      return
+    }
+
     await sdk.watchAssets([
       {
         type: "ARC20",
         options: {
-          address: tokenAddress!,
+          address: tokenAddress,
           name: "TEST",
           symbol: "TEST",
           decimals: 18,
@@ -67,8 +77,20 @@ export function Example() {
     console.log("fetching balances...")
     console.log("account: ", account)
     console.log("tokenContract: ", tokenContract)
-    if (!account) return
-    if (!tokenContract) return
+
+    if (!pxe) {
+      setError("PXE not found")
+      return
+    }
+
+    if (!account) {
+      setError("Account not found")
+      return
+    }
+    if (!tokenContract) {
+      setError("Token contract not found")
+      return
+    }
 
     const privateBalance = await tokenContract.methods
       .balance_of_private(account.getAddress())
@@ -100,7 +122,7 @@ export function Example() {
     }
   }, [tokenAddress, account])
 
-  const handleSendTx = async (isPrivate: boolean) => {
+  const handleSendTx = async (isPrivate: boolean, withAuthWitness: boolean = false) => {
     setLoading(true)
     setError(null)
     if (!account) {
@@ -130,9 +152,44 @@ export function Example() {
     console.log("sending token")
 
     try {
+      let authwitRequests: IntentAction[] | undefined = undefined
+      if (withAuthWitness) {
+        authwitRequests = [
+          {
+            caller: account.getAddress(),
+            action: await tokenContract.methods
+              .transfer_in_private(
+                account.getAddress(),
+                AztecAddress.fromString(recipient),
+                BigInt(amount) * BigInt(1e18),
+                0,
+              )
+              .request(),
+          },
+          {
+            caller: account.getAddress(),
+            action: await tokenContract.methods
+              .transfer_to_public(
+                account.getAddress(),
+                AztecAddress.fromString(recipient),
+                BigInt(amount) * BigInt(1e18),
+                0,
+              )
+              .request(),
+          },
+        ]
+      }
+      console.log("authwitRequests: ", authwitRequests)
+
       const txHash = await tokenContract.methods[
         isPrivate ? "transfer_in_private" : "transfer_in_public"
-      ](account.getAddress(), AztecAddress.fromString(recipient), BigInt(amount) * BigInt(1e18), 0)
+      ](
+        account.getAddress(),
+        AztecAddress.fromString(recipient),
+        BigInt(amount) * BigInt(1e18),
+        0,
+        withAuthWitness ? { authWitnesses: authwitRequests } : undefined,
+      )
         .send()
         .wait()
       console.log("txHash: ", txHash)
@@ -188,8 +245,9 @@ export function Example() {
 
   return (
     <Stack align="center" justify="space-between" gap="md" mt={100}>
-      <Text mb={30} size="30px">
-        Example Token App
+      <Text size="30px">Example Token App</Text>
+      <Text my={20} size="18px">
+        This is an example token app that demonstrates app integration with Obsidion Wallet.
       </Text>
 
       {account ? (
@@ -216,19 +274,38 @@ export function Example() {
                 value={recipient || ""}
                 onChange={(e) => setRecipient(e.target.value)}
               />
+              <Checkbox
+                label="With Random AuthWit ( Just to see how tx confirmation works w/ authwits )"
+                checked={withAuthWitness}
+                onChange={(e) => setWithAuthWitness(e.target.checked)}
+              />
               <div style={{ display: "flex", gap: 20 }}>
-                <Button mt={10} disabled={loading} onClick={() => handleSendTx(true)}>
+                <Button
+                  mt={10}
+                  disabled={loading}
+                  onClick={() => handleSendTx(true, withAuthWitness)}
+                >
                   Send Token (Private)
                 </Button>
-                <Button mt={10} disabled={loading} onClick={() => handleSendTx(false)}>
+                <Button
+                  mt={10}
+                  disabled={loading}
+                  onClick={() => handleSendTx(false, withAuthWitness)}
+                >
                   Send Token (Public)
                 </Button>
               </div>
-              <Button mt={10} onClick={() => handleFetchBalances()}>
-                Fetch Balances
-              </Button>
-              <Button mt={10} onClick={() => handleAddToken()}>
-                Add Token
+
+              <div style={{ display: "flex", gap: 20 }}>
+                <Button mt={10} onClick={() => handleFetchBalances()}>
+                  Fetch Balances
+                </Button>
+                <Button mt={10} onClick={() => handleAddToken()}>
+                  Add Token
+                </Button>
+              </div>
+              <Button color="gray" mt={10} onClick={() => sdk.disconnect()}>
+                Disconnect
               </Button>
               {error && <Text color="red">{error}</Text>}
             </>

@@ -17,7 +17,7 @@
     "@mantine/core": "^7.3.2",
     "@mantine/hooks": "^7.3.2",
     "@mantine/notifications": "^7.3.2",
-    "@shieldswap/wallet-sdk": "0.76.1-obsidion.7",
+    "@shieldswap/wallet-sdk": "0.76.1-obsidion.9",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.22.3",
