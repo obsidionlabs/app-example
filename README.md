@@ -58,15 +58,24 @@ For more details, see the [src/example.tsx](./src/example.tsx)
 
 ## Notes
 
-#### Change Sandbox URL &  L1 RPC URL
+### Change Sandbox URL &  L1 RPC URL
 
 it's recommended to use your own local sandbox if you can as our hosted sandbox is a bit slower. you
-can change pxe url and l1 rpc url from Settings > Services in the Obsidion Wallet UI. If this doesn't work,
+can change pxe url and l1 rpc url from Settings > Services in the Obsidion Wallet UI. 
+
+<img src="https://github.com/user-attachments/assets/bc2799de-382b-40ab-83ff-ce4abd2a1507" alt="Screenshot" width="50%" />
+
+
+If this doesn't work,
 directly change the value in local storage where the key is `obsidion_pxe_url` and `eth_rpc_url` respectively.
 
-#### Devnet
+### Advanced Mode
 
-not supported yet.
+Note Discovery and PXE Dashboard...
+
+### Devnet
+
+not supported yet. Chaning sandbox & l1 rpc URLs wouldn't probably work. 
 
 ## Troubleshooting
 
@@ -87,8 +96,14 @@ If you encounter any error with wallet connect, pleasetry the following:
 
 ### simulate() with `aztec_call` not working
 
-If simulate() with `aztec_call` not working and it's not resolved even after clearing wallet connect
-cache, there is a chance that you open either obsidion wallet tab or app tab in multiple tabs.
+If simulate() with `aztec_call` not working, and it's not resolved even after clearing wallet connect
+cache, one of the followings might be the cause.
+
+#### 1. Wallet Tab Closed
+If wallet tab, e.g. obsidion.vercel.app, is closed, simulation rpc call gets drop. Make sure you keep it open while using dapp. 
+
+#### 2. Duplicate Tabs
+you open either obsidion wallet tab or app tab in multiple tabs.
 
 ### CORS error with your local sandbox.
 
