@@ -58,15 +58,11 @@ For more details, see the src/example.tsx
 
 ## Notes
 
-#### Change Sandbox URL
+#### Change Sandbox URL &  L1 RPC URL
 
 it's recommended to use your own local sandbox if you can as our hosted sandbox is a bit slower. you
-can change pxe url from Settings > Services in the Obsidion Wallet UI. If this doesn't work,
-directly change the value in local storage where the key is "obsidion_pxe_url".
-
-#### Change L1 RPC URL
-
-you can change L1 RPC URL by setting the `eth_rpc_url` in local storage to your own L1 RPC URL.
+can change pxe url and l1 rpc url from Settings > Services in the Obsidion Wallet UI. If this doesn't work,
+directly change the value in local storage where the key is `obsidion_pxe_url` and `eth_rpc_url` respectively.
 
 #### Devnet
 
