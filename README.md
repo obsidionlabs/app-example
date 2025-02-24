@@ -54,7 +54,7 @@ const exampleMethod = async () => {
 exampleMethod()
 ```
 
-For more details, see the src/example.tsx
+For more details, see the [src/example.tsx](./src/example.tsx)
 
 ## Notes
 
@@ -70,7 +70,7 @@ not supported yet.
 
 ## Troubleshooting
 
-#### Wallet Connect Issues
+### Wallet Connect Issues
 
 example:
 
@@ -85,12 +85,12 @@ If you encounter any error with wallet connect, pleasetry the following:
    site.
 3. clear wallet connect cache for wallet site too.
 
-#### simulate() with `aztec_call` not working
+### simulate() with `aztec_call` not working
 
 If simulate() with `aztec_call` not working and it's not resolved even after clearing wallet connect
 cache, there is a chance that you open either obsidion wallet tab or app tab in multiple tabs.
 
-#### CORS error with your local sandbox.
+### CORS error with your local sandbox.
 
 If you can't use your local sandbox due to CORS's blocking, you probably need to run a proxy server
 locally at a different port that relays the calls between wallet frontend and your local sandbox.
@@ -101,3 +101,10 @@ Feel free to reach out to us, then we can share the codebase of the proxy server
 Please join
 [our Signal group](https://signal.group/#CjQKIDBmFVuI9gz2cRZaa3HD4-tJpGc8PrWQ9aec_AomvJRjEhDEHAiu0G6zkaF9xf9Q3ufI)
 for more help and feedback.
+
+## Run example app
+```shell
+pnpm dev
+```
+
+
