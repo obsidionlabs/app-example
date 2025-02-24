@@ -56,7 +56,7 @@ exampleMethod()
 
 For more details, see the [src/example.tsx](./src/example.tsx)
 
-## Notes
+## Configuration & Tools
 
 ### Change Sandbox URL &  L1 RPC URL
 
@@ -72,10 +72,6 @@ directly change the value in local storage where the key is `obsidion_pxe_url` a
 ### Advanced Mode
 
 Note Discovery and PXE Dashboard...
-
-### Devnet
-
-not supported yet. Chaning sandbox & l1 rpc URLs wouldn't probably work. 
 
 ## Troubleshooting
 
@@ -110,6 +106,10 @@ you open either obsidion wallet tab or app tab in multiple tabs.
 If you can't use your local sandbox due to CORS's blocking, you probably need to run a proxy server
 locally at a different port that relays the calls between wallet frontend and your local sandbox.
 Feel free to reach out to us, then we can share the codebase of the proxy server.
+
+### Devnet
+
+not supported yet. Chaning sandbox & l1 rpc URLs wouldn't probably work. 
 
 ## Support
 
