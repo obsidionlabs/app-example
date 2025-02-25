@@ -69,9 +69,37 @@ can change pxe url and l1 rpc url from Settings > Services in the Obsidion Walle
 If this doesn't work,
 directly change the value in local storage where the key is `obsidion_pxe_url` and `eth_rpc_url` respectively.
 
-### Advanced Mode
+## Advanced Mode
+In settings navigate to advanced to activate these features and they will become active in your navbar.
 
-Note Discovery and PXE Dashboard...
+### The PXE Dashboard
+
+This is a tool to connect to receive insights on their PXE and the Aztec node that they are connected to in a readable format for quick review.
+
+1. Node Information (`getNodeInfo`)
+  Returns the information about the server's node
+  Includes current Node version, compatible Noir version, L1 chain identifier, protocol version, and L1 address of the rollup contract
+
+2. Contracts (`getContracts`)
+  Lists all of the contract addresses that have been registered in your PXE
+
+3. Registered Accounts (`getRegisteredAccounts`)
+  Displays all of the user accounts (Aztec Address) that have been registered with your PXE
+
+4. Senders (`getSenders`)
+  The addresses of the registered senders in your PXE
+  These are the addresses you can communicate with
+
+5. Block Information (`getBlock`)
+  This provides detailed information about the current block of the network
+  Includes the block number, block timestamp, block hash, transaction count and other metadata
+
+### Note Discovery
+
+Allows users to view and manage their private notes on the Aztec Network. The feature provides an interface to discover, categorize, and monitor notes associated with your accounts.
+It scans the chain for notes associated with your account, decrypts the notes using your private keys and categorizes the notes based on known assets and unknown assets.
+It is useful for discovering, monitoring and verifying notes that are linked to your account.
+Users can switch between accounts to view notes specific to each account.
 
 ## Troubleshooting
 
