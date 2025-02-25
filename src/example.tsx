@@ -50,6 +50,7 @@ export function Example() {
   }, [tokenAddress])
 
   const handleAddToken = async () => {
+    setError(null)
     console.log("adding token...")
     console.log("account: ", account)
     console.log("tokenContract: ", tokenContract)
