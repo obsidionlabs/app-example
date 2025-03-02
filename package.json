@@ -11,13 +11,12 @@
     "build": "vite build"
   },
   "dependencies": {
-    "@aztec/accounts": "0.76.1",
     "@aztec/aztec.js": "0.76.1",
     "@aztec/noir-contracts.js": "0.76.1",
     "@mantine/core": "^7.3.2",
     "@mantine/hooks": "^7.3.2",
     "@mantine/notifications": "^7.3.2",
-    "@shieldswap/wallet-sdk": "0.76.1-obsidion.9",
+    "@shieldswap/wallet-sdk": "0.76.1-next.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.22.3",
