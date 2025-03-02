@@ -1,37 +1,31 @@
 import { useEffect, useState } from "react"
 import { Button, Checkbox, Loader, Stack, Text, TextInput } from "@mantine/core"
-import { AztecAddress, createPXEClient, FunctionCall } from "@aztec/aztec.js"
-import { TokenContract, TokenContractArtifact } from "@aztec/noir-contracts.js/Token"
-import { getDeployedTestAccountsWallets } from "@aztec/accounts/testing"
+import { AztecAddress } from "@aztec/aztec.js"
+import { TokenContract } from "@aztec/noir-contracts.js/Token"
+import type { IntentAction } from "@shieldswap/wallet-sdk"
 import { Contract } from "@shieldswap/wallet-sdk/eip1193"
 import { useAccount } from "@shieldswap/wallet-sdk/react"
-import { ReownPopupWalletSdk } from "@shieldswap/wallet-sdk"
+import { AztecWalletSdk, obsidion } from "@shieldswap/wallet-sdk"
 import { fallbackOpenPopup } from "./fallback"
 
-export type IntentAction = {
-  caller: AztecAddress
-  action: FunctionCall
-}
+class Token extends Contract.fromAztec(TokenContract) {}
 
-const PXE_URL = "http://localhost:8080" // or "https://pxe.obsidion.xyz"
-// const PXE_URL = "https://pxe.obsidion.xyz"
-const pxe = createPXEClient(PXE_URL)
+const NODE_URL = "http://localhost:8080" // or "https://pxe.obsidion.xyz"
+// const NODE_URL = "https://pxe.obsidion.xyz"
 
-const wcOptions = {
-  projectId: "067a11239d95dd939ee98ea22bde21da",
-}
-
-const params = {
-  walletUrl: "http://localhost:5173",
-  fallbackOpenPopup: fallbackOpenPopup,
-}
-
-const sdk = new ReownPopupWalletSdk(pxe, wcOptions, params)
+const sdk = new AztecWalletSdk({
+  aztecNode: NODE_URL,
+  fallbackOpenPopup,
+  adapters: [obsidion({
+    walletUrl: "http://localhost:5173",
+    projectId: "067a11239d95dd939ee98ea22bde21da",
+  })],
+});
 
 export function Example() {
   const account = useAccount(sdk)
 
-  const [tokenContract, setTokenContract] = useState<Contract<TokenContract> | null>(null)
+  const [tokenContract, setTokenContract] = useState<Token | null>(null)
   const [tokenAddress, setTokenAddress] = useState<string | null>(() => {
     return localStorage.getItem("tokenAddress")
   })
@@ -78,11 +72,6 @@ export function Example() {
     console.log("account: ", account)
     console.log("tokenContract: ", tokenContract)
 
-    if (!pxe) {
-      setError("PXE not found")
-      return
-    }
-
     if (!account) {
       setError("Account not found")
       return
@@ -97,8 +86,7 @@ export function Example() {
       .simulate()
     console.log("privateBalance: ", privateBalance)
 
-    const deployer = (await getDeployedTestAccountsWallets(pxe))[0]
-    const token = await TokenContract.at(tokenContract.address, deployer)
+    const token = await Token.at(tokenContract.address, account)
     const publicBalance = await token.methods.balance_of_public(account.getAddress()).simulate()
 
     setPublicBalance(((publicBalance as unknown as bigint) / BigInt(1e18)).toString())
@@ -114,7 +102,6 @@ export function Example() {
   useEffect(() => {
     if (tokenAddress && account) {
       const initTokenContract = async () => {
-        const Token = Contract.fromAztec(TokenContract, TokenContractArtifact)
         const tokenContract = await Token.at(AztecAddress.fromString(tokenAddress), account)
         setTokenContract(tokenContract)
       }
@@ -212,10 +199,9 @@ export function Example() {
 
     setLoading(true)
 
-    const deployer = (await getDeployedTestAccountsWallets(pxe))[0]
-    const deployTx = await TokenContract.deploy(
-      deployer,
-      deployer.getAddress(),
+    const deployTx = await Token.deploy(
+      account,
+      account.getAddress(),
       "Token",
       "TEST",
       18n,
@@ -226,16 +212,15 @@ export function Example() {
 
     const tokenContract = deployTx.contract
     await tokenContract.methods
-      .mint_to_private(deployer.getAddress(), deployer.getAddress(), 1000e18)
+      .mint_to_private(account.getAddress(), account.getAddress(), 1000e18)
       .send()
       .wait()
     await tokenContract.methods
-      .transfer_in_private(deployer.getAddress(), account.address, 1000e18, 0)
+      .transfer_in_private(account.getAddress(), account.address, 1000e18, 0)
       .send()
       .wait()
     await tokenContract.methods.mint_to_public(account.address, 1000e18).send().wait()
 
-    const Token = Contract.fromAztec(TokenContract, TokenContractArtifact)
     const token = await Token.at(tokenContract.address, account)
     setTokenContract(token)
     setTokenAddress(tokenContract.address.toString())
@@ -334,7 +319,7 @@ export function Example() {
         <Button
           onClick={async () => {
             console.log("connecting...")
-            const account = await sdk.connect()
+            const account = await sdk.connect("obsidion");
             console.log("account: ", account)
           }}
         >
