@@ -6,18 +6,18 @@
 - Our hosted PXE url: https://pxe.obsidion.xyz/
 - aztec-package/sandbox version: _0.76.1_
 - wallet sdk: https://www.npmjs.com/package/@shieldswap/wallet-sdk
-  - \*use 0.76.1-next.4 version of this sdk.
+  - \*use 0.76.1-next.5 version of this sdk.
 
 ### 1. install obsidion wallet sdk
 
 ```shell
-pnpm i @shieldswap/wallet-sdk@0.76.1-next.4
+pnpm i @shieldswap/wallet-sdk@0.76.1-next.5
 ```
 
 ### 2. how to use sdk
 
 ```tsx
-import { ReownPopupWalletSdk } from "@shieldswap/wallet-sdk"
+import { AztecWalletSdk, obsidion } from "@shieldswap/wallet-sdk"
 import { Contract } from "@shieldswap/wallet-sdk/eip1193"
 import { TokenContract } from "@aztec/noir-contracts.js/Token"
 
@@ -25,12 +25,15 @@ class Token extends Contract.fromAztec(TokenContract) {}
 
 const NODE_URL = "https://pxe.obsidion.xyz" // or http://localhost:8080
 
-const wcOptions = {
-  // you can obtain your own project id from https://cloud.reown.com/sign-up
-  projectId: "067a11239d95dd939ee98ea22bde21da",
-}
-
-const sdk = new ReownPopupWalletSdk(NODE_URL, wcOptions)
+const sdk = new AztecWalletSdk({
+  aztecNode: NODE_URL,
+  fallbackOpenPopup,
+  adapters: [obsidion({
+    // you can obtain your own project id from https://cloud.reown.com/sign-up
+    projectId: "067a11239d95dd939ee98ea22bde21da",
+    walletUrl: "http://localhost:5173", // optional
+  })],
+});
 
 // example method that does...
 // 1. connect to wallet
@@ -39,7 +42,7 @@ const sdk = new ReownPopupWalletSdk(NODE_URL, wcOptions)
 
 const exampleMethod = async () => {
   // instantiate wallet sdk
-  const account = await sdk.connect()
+  const account = await sdk.connect("obsidion")
 
   // instantiate token contract
   const tokenAddress = "0x0000...00000"

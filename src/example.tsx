@@ -5,7 +5,7 @@ import { TokenContract } from "@aztec/noir-contracts.js/Token"
 import type { IntentAction } from "@shieldswap/wallet-sdk"
 import { Contract } from "@shieldswap/wallet-sdk/eip1193"
 import { useAccount } from "@shieldswap/wallet-sdk/react"
-import { ReownPopupWalletSdk } from "@shieldswap/wallet-sdk"
+import { AztecWalletSdk, obsidion } from "@shieldswap/wallet-sdk"
 import { fallbackOpenPopup } from "./fallback"
 
 class Token extends Contract.fromAztec(TokenContract) {}
@@ -13,16 +13,14 @@ class Token extends Contract.fromAztec(TokenContract) {}
 const NODE_URL = "http://localhost:8080" // or "https://pxe.obsidion.xyz"
 // const NODE_URL = "https://pxe.obsidion.xyz"
 
-const wcOptions = {
-  projectId: "067a11239d95dd939ee98ea22bde21da",
-}
-
-const params = {
-  walletUrl: "http://localhost:5173",
-  fallbackOpenPopup: fallbackOpenPopup,
-}
-
-const sdk = new ReownPopupWalletSdk(NODE_URL, wcOptions, params)
+const sdk = new AztecWalletSdk({
+  aztecNode: NODE_URL,
+  fallbackOpenPopup,
+  adapters: [obsidion({
+    walletUrl: "http://localhost:5173",
+    projectId: "067a11239d95dd939ee98ea22bde21da",
+  })],
+});
 
 export function Example() {
   const account = useAccount(sdk)
@@ -321,7 +319,7 @@ export function Example() {
         <Button
           onClick={async () => {
             console.log("connecting...")
-            const account = await sdk.connect()
+            const account = await sdk.connect("obsidion");
             console.log("account: ", account)
           }}
         >

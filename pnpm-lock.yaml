@@ -24,8 +24,8 @@ importers:
         specifier: ^7.3.2
         version: 7.17.1(@mantine/core@7.17.1(@mantine/hooks@7.17.1(react@18.3.1))(@types/react@18.3.18)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@mantine/hooks@7.17.1(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@shieldswap/wallet-sdk':
-        specifier: 0.76.1-next.4
-        version: 0.76.1-next.4(@types/react@18.3.18)(react@18.3.1)(typescript@5.0.4)(zod@3.24.2)
+        specifier: 0.76.1-next.5
+        version: 0.76.1-next.5(@types/react@18.3.18)(react@18.3.1)(typescript@5.0.4)(zod@3.24.2)
       react:
         specifier: ^18.2.0
         version: 18.3.1
@@ -727,8 +727,8 @@ packages:
   '@scure/bip39@1.5.4':
     resolution: {integrity: sha512-TFM4ni0vKvCfBpohoh+/lY05i9gRbSwXWngAsF4CABQxoaOHijxuaZ2R6cStDQ5CHtHO9aGJTr4ksVJASRRyMA==}
 
-  '@shieldswap/wallet-sdk@0.76.1-next.4':
-    resolution: {integrity: sha512-c/IoXjGYVUFjX/HFCf57zxdz1DEj+RgqpC7iBc41f4mDKKb+izeJefb7G2msblrI232eF64+vL8o4nE9y+59EQ==}
+  '@shieldswap/wallet-sdk@0.76.1-next.5':
+    resolution: {integrity: sha512-i9D9Z9n4sNB9Ns4BT1sKOez9RV04nJdZ/FLkiRdQV6dHbE+Oakn+N9EOzMbhi+zJTtGZLH+4msDf7kH5DkfKdw==}
     peerDependencies:
       react: ^18.0.0
     peerDependenciesMeta:
@@ -3382,6 +3382,11 @@ packages:
     peerDependencies:
       svelte: ^3.48.0 || ^4.0.0 || ^5.0.0-next.0
 
+  svelte-reactive@0.0.10:
+    resolution: {integrity: sha512-Q24uD/t27chzj14zvav1x/pLd0YVcjPOUm31nUaIu0ofJBAeNLPOU305iEqmBDSMqcsLaye7kTgFlRhf5bteZg==}
+    peerDependencies:
+      svelte: ^3.0.0 || ^4.0.0 || ^5.0.0
+
   svelte@5.20.5:
     resolution: {integrity: sha512-dpu2lTPVsAAgZFKpF7A9741sBCdXGogfxFU4aQeVgun7GVNCSVheTzj0FsT7g9OsLhBaMX4lKLwVIvmzQGytmQ==}
     engines: {node: '>=18'}
@@ -4593,7 +4598,7 @@ snapshots:
       '@noble/hashes': 1.7.1
       '@scure/base': 1.2.4
 
-  '@shieldswap/wallet-sdk@0.76.1-next.4(@types/react@18.3.18)(react@18.3.1)(typescript@5.0.4)(zod@3.24.2)':
+  '@shieldswap/wallet-sdk@0.76.1-next.5(@types/react@18.3.18)(react@18.3.1)(typescript@5.0.4)(zod@3.24.2)':
     dependencies:
       '@aztec/aztec.js': 0.76.1(typescript@5.0.4)(zod@3.24.2)
       '@aztec/circuit-types': 0.76.1(typescript@5.0.4)
@@ -4606,6 +4611,7 @@ snapshots:
       ox: 0.6.9(typescript@5.0.4)(zod@3.24.2)
       svelte: 5.20.5
       svelte-persisted-store: 0.11.0(svelte@5.20.5)
+      svelte-reactive: 0.0.10(svelte@5.20.5)
       ts-essentials: 9.4.2(typescript@5.0.4)
       ufo: 1.5.4
     optionalDependencies:
@@ -5170,7 +5176,7 @@ snapshots:
       '@noble/hashes': 1.7.0
       '@walletconnect/safe-json': 1.0.2
       '@walletconnect/time': 1.0.2
-      uint8arrays: 3.1.0
+      uint8arrays: 3.1.1
 
   '@walletconnect/safe-json@1.0.2':
     dependencies:
@@ -7970,6 +7976,10 @@ snapshots:
   supports-preserve-symlinks-flag@1.0.0: {}
 
   svelte-persisted-store@0.11.0(svelte@5.20.5):
+    dependencies:
+      svelte: 5.20.5
+
+  svelte-reactive@0.0.10(svelte@5.20.5):
     dependencies:
       svelte: 5.20.5
 
