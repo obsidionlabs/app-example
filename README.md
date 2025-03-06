@@ -2,7 +2,7 @@
 
 ## Basic Info
 
-- Obsidion app: https://obsidion.vercel.app/
+- Obsidion app: https://app.obsidion.xyz/
 - Our hosted PXE url: https://pxe.obsidion.xyz/
 - aztec-package/sandbox version: _0.76.1_
 - wallet sdk: https://www.npmjs.com/package/@shieldswap/wallet-sdk
