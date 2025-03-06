@@ -1,20 +1,15 @@
 import { useEffect, useState } from "react"
 import { Button, Checkbox, Loader, Stack, Text, TextInput } from "@mantine/core"
-import { AztecAddress, createPXEClient, FunctionCall } from "@aztec/aztec.js"
+import { AztecAddress, createPXEClient, readFieldCompressedString } from "@aztec/aztec.js"
 import { TokenContract, TokenContractArtifact } from "@aztec/noir-contracts.js/Token"
 import { getDeployedTestAccountsWallets } from "@aztec/accounts/testing"
-import { Contract } from "@shieldswap/wallet-sdk/eip1193"
+import { Contract, IntentAction } from "@shieldswap/wallet-sdk/eip1193"
 import { useAccount } from "@shieldswap/wallet-sdk/react"
 import { ReownPopupWalletSdk } from "@shieldswap/wallet-sdk"
 import { fallbackOpenPopup } from "./fallback"
-
-export type IntentAction = {
-  caller: AztecAddress
-  action: FunctionCall
-}
+import { formatUnits, parseUnits } from "viem"
 
 const PXE_URL = "http://localhost:8080" // or "https://pxe.obsidion.xyz"
-// const PXE_URL = "https://pxe.obsidion.xyz"
 const pxe = createPXEClient(PXE_URL)
 
 const wcOptions = {
@@ -28,12 +23,26 @@ const params = {
 
 const sdk = new ReownPopupWalletSdk(pxe, wcOptions, params)
 
+type Token = {
+  address: string
+  name: string
+  symbol: string
+  decimals: number
+}
+
 export function Example() {
   const account = useAccount(sdk)
 
   const [tokenContract, setTokenContract] = useState<Contract<TokenContract> | null>(null)
-  const [tokenAddress, setTokenAddress] = useState<string | null>(() => {
-    return localStorage.getItem("tokenAddress")
+  const [token, setToken] = useState<Token | null>(() => {
+    const storedToken = localStorage.getItem("token")
+    if (!storedToken) return null
+    try {
+      return JSON.parse(storedToken) as Token
+    } catch (e) {
+      console.error("Failed to parse token from localStorage:", e)
+      return null
+    }
   })
 
   const [privateBalance, setPrivateBalance] = useState<string | null>(null)
@@ -46,8 +55,43 @@ export function Example() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    localStorage.setItem("tokenAddress", tokenAddress || "")
-  }, [tokenAddress])
+    const loadToken = async () => {
+      console.log("token: ", token, tokenContract)
+      if (
+        token &&
+        tokenContract &&
+        token.name === "" &&
+        token.symbol === "" &&
+        token.decimals === 0
+      ) {
+        console.log("fetching token info...")
+        const deployer = (await getDeployedTestAccountsWallets(pxe))[0]
+        const tokenContract = await TokenContract.at(
+          AztecAddress.fromString(token.address),
+          deployer,
+        )
+        const name = readFieldCompressedString(
+          await tokenContract.methods.public_get_name().simulate(),
+        )
+        const symbol = readFieldCompressedString(
+          await tokenContract.methods.public_get_symbol().simulate(),
+        )
+        const decimals = await tokenContract.methods.public_get_decimals().simulate()
+
+        setToken({
+          address: token.address,
+          name: name,
+          symbol: symbol,
+          decimals: Number(decimals),
+        })
+        localStorage.setItem("token", JSON.stringify(token))
+      } else {
+        localStorage.setItem("token", JSON.stringify(token))
+      }
+    }
+
+    loadToken()
+  }, [token, tokenContract])
 
   const handleAddToken = async () => {
     setError(null)
@@ -55,8 +99,8 @@ export function Example() {
     console.log("account: ", account)
     console.log("tokenContract: ", tokenContract)
 
-    if (!tokenAddress) {
-      setError("Token address not found")
+    if (!token) {
+      setError("Token not found")
       return
     }
 
@@ -64,10 +108,10 @@ export function Example() {
       {
         type: "ARC20",
         options: {
-          address: tokenAddress,
-          name: "TEST",
-          symbol: "TEST",
-          decimals: 18,
+          address: token.address,
+          name: token.name,
+          symbol: token.symbol,
+          decimals: token.decimals,
           image: "",
         },
       },
@@ -88,22 +132,37 @@ export function Example() {
       setError("Account not found")
       return
     }
+
+    if (!token) {
+      setError("Token contract not found")
+      return
+    }
+
     if (!tokenContract) {
       setError("Token contract not found")
       return
     }
 
-    const privateBalance = await tokenContract.methods
-      .balance_of_private(account.getAddress())
-      .simulate()
-    console.log("privateBalance: ", privateBalance)
+    try {
+      const privateBalance = await tokenContract.methods
+        .balance_of_private(account.getAddress())
+        .simulate()
+      console.log("privateBalance: ", privateBalance)
 
-    const deployer = (await getDeployedTestAccountsWallets(pxe))[0]
-    const token = await TokenContract.at(tokenContract.address, deployer)
-    const publicBalance = await token.methods.balance_of_public(account.getAddress()).simulate()
+      const deployer = (await getDeployedTestAccountsWallets(pxe))[0]
+      const tokenWithDeployer = await TokenContract.at(tokenContract.address, deployer)
+      const publicBalance = await tokenWithDeployer.methods
+        .balance_of_public(account.getAddress())
+        .simulate()
 
-    setPublicBalance(((publicBalance as unknown as bigint) / BigInt(1e18)).toString())
-    setPrivateBalance(((privateBalance as unknown as bigint) / BigInt(1e18)).toString())
+      console.log("publicBalance: ", publicBalance)
+
+      setPublicBalance(formatUnits(BigInt(publicBalance.toString()), token.decimals))
+      setPrivateBalance(formatUnits(BigInt(privateBalance.toString()), token.decimals))
+    } catch (e) {
+      setError("Error fetching balances")
+      console.error("Error fetching balances: ", e)
+    }
   }
 
   useEffect(() => {
@@ -113,21 +172,27 @@ export function Example() {
   }, [account, tokenContract])
 
   useEffect(() => {
-    if (tokenAddress && account) {
+    if (token && account) {
       const initTokenContract = async () => {
         const Token = Contract.fromAztec(TokenContract, TokenContractArtifact)
-        const tokenContract = await Token.at(AztecAddress.fromString(tokenAddress), account)
+        const tokenContract = await Token.at(AztecAddress.fromString(token.address), account)
         setTokenContract(tokenContract)
       }
       initTokenContract()
     }
-  }, [tokenAddress, account])
+  }, [token, account])
 
   const handleSendTx = async (isPrivate: boolean, withAuthWitness: boolean = false) => {
     setLoading(true)
     setError(null)
     if (!account) {
       setError("Account not found")
+      setLoading(false)
+      return
+    }
+
+    if (!token) {
+      setError("Token not found")
       setLoading(false)
       return
     }
@@ -162,7 +227,7 @@ export function Example() {
               .transfer_in_private(
                 account.getAddress(),
                 AztecAddress.fromString(recipient),
-                BigInt(amount) * BigInt(1e18),
+                parseUnits(amount.toString(), token.decimals),
                 0,
               )
               .request(),
@@ -173,7 +238,7 @@ export function Example() {
               .transfer_to_public(
                 account.getAddress(),
                 AztecAddress.fromString(recipient),
-                BigInt(amount) * BigInt(1e18),
+                parseUnits(amount.toString(), token.decimals),
                 0,
               )
               .request(),
@@ -187,7 +252,7 @@ export function Example() {
       ](
         account.getAddress(),
         AztecAddress.fromString(recipient),
-        BigInt(amount) * BigInt(1e18),
+        parseUnits(amount.toString(), token.decimals),
         0,
         withAuthWitness ? { authWitnesses: authwitRequests } : undefined,
       )
@@ -239,9 +304,14 @@ export function Example() {
     const Token = Contract.fromAztec(TokenContract, TokenContractArtifact)
     const token = await Token.at(tokenContract.address, account)
     setTokenContract(token)
-    setTokenAddress(tokenContract.address.toString())
+
+    setToken({
+      address: tokenContract.address.toString(),
+      name: "TEST",
+      symbol: "TEST",
+      decimals: 18,
+    })
     setLoading(false)
-    handleFetchBalances()
   }
 
   return (
@@ -249,17 +319,25 @@ export function Example() {
       <Text size="30px">Example Token App</Text>
       <Text my={20} size="18px">
         This is an example token app that demonstrates app integration with Obsidion Wallet.
+        <br style={{ margin: "0 auto" }} />
+        <span style={{ marginTop: 10, fontSize: 14, textAlign: "center", display: "block" }}>
+          *Currently only works on Sandbox
+        </span>
       </Text>
 
       {account ? (
         <>
           <Text size="sm">Connected Account: {account.getAddress().toString()}</Text>
-          {tokenContract && tokenAddress ? (
+          {tokenContract && token ? (
             <>
-              <Text size="sm">Token: {tokenAddress}</Text>
+              <Text size="sm">Token: {token.address}</Text>
               <div style={{ display: "flex", gap: 10 }}>
-                <Text>Private Balance: {privateBalance ? `${privateBalance} TEST` : "0 TEST"}</Text>
-                <Text>Public Balance: {publicBalance ? `${publicBalance} TEST` : "0 TEST"}</Text>
+                <Text>
+                  Private Balance: {privateBalance ? `${privateBalance} ${token.symbol}` : "0"}
+                </Text>
+                <Text>
+                  Public Balance: {publicBalance ? `${publicBalance} ${token.symbol}` : "0"}
+                </Text>
               </div>
 
               <TextInput
@@ -312,19 +390,25 @@ export function Example() {
             </>
           ) : (
             <>
+              <Text mt={20}>Use any deployed token or deploy TEST token</Text>
               <TextInput
                 label="Token Address"
                 style={{ width: "50%" }}
                 placeholder="0x..."
-                value={tokenAddress || ""}
+                value={token?.address || ""}
                 onChange={(e) => {
-                  setTokenAddress(e.target.value)
-                  localStorage.setItem("tokenAddress", e.target.value)
+                  setToken({
+                    address: e.target.value,
+                    name: "",
+                    symbol: "",
+                    decimals: 0,
+                  })
+                  localStorage.setItem("token", JSON.stringify(token))
                 }}
               />
               <div style={{ display: "flex", gap: 20 }}>
                 <Button mt={10} disabled={loading} onClick={() => handleMintToken()}>
-                  Deploy & Mint Token
+                  Deploy & Mint TEST Token
                 </Button>
               </div>
               {error && <Text color="red">{error}</Text>}
