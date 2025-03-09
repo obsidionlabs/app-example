@@ -1,29 +1,26 @@
 import { useEffect, useState } from "react"
 import { Button, Checkbox, Loader, Stack, Text, TextInput } from "@mantine/core"
 import { AztecAddress, createPXEClient, readFieldCompressedString } from "@aztec/aztec.js"
-import { TokenContract, TokenContractArtifact } from "@aztec/noir-contracts.js/Token"
-import { getDeployedTestAccountsWallets } from "@aztec/accounts/testing"
+import { TokenContract } from "@aztec/noir-contracts.js/Token"
 import { Contract, IntentAction } from "@shieldswap/wallet-sdk/eip1193"
 import { useAccount } from "@shieldswap/wallet-sdk/react"
-import { ReownPopupWalletSdk } from "@shieldswap/wallet-sdk"
-import { fallbackOpenPopup } from "./fallback"
+import { AztecWalletSdk, obsidion } from "@shieldswap/wallet-sdk"
 import { formatUnits, parseUnits } from "viem"
 
-const PXE_URL = "http://localhost:8080" // or "https://pxe.obsidion.xyz"
-const pxe = createPXEClient(PXE_URL)
+class Token extends Contract.fromAztec(TokenContract) {}
 
-const wcOptions = {
-  projectId: "067a11239d95dd939ee98ea22bde21da",
-}
+const NODE_URL = "http://localhost:8080" // or "https://pxe.obsidion.xyz"
+const pxe = createPXEClient(NODE_URL)
 
-const params = {
-  walletUrl: "http://localhost:5173",
-  fallbackOpenPopup: fallbackOpenPopup,
-}
+const WALLET_URL = "http://localhost:5173"
+const PROJECT_ID = "067a11239d95dd939ee98ea22bde21da"
 
-const sdk = new ReownPopupWalletSdk(pxe, wcOptions, params)
+const sdk = new AztecWalletSdk({
+  aztecNode: NODE_URL,
+  adapters: [obsidion({ walletUrl: WALLET_URL, projectId: PROJECT_ID })],
+})
 
-type Token = {
+type TokenType = {
   address: string
   name: string
   symbol: string
@@ -33,12 +30,12 @@ type Token = {
 export function Example() {
   const account = useAccount(sdk)
 
-  const [tokenContract, setTokenContract] = useState<Contract<TokenContract> | null>(null)
-  const [token, setToken] = useState<Token | null>(() => {
+  const [tokenContract, setTokenContract] = useState<Token | null>(null)
+  const [token, setToken] = useState<TokenType | null>(() => {
     const storedToken = localStorage.getItem("token")
     if (!storedToken) return null
     try {
-      return JSON.parse(storedToken) as Token
+      return JSON.parse(storedToken) as TokenType
     } catch (e) {
       console.error("Failed to parse token from localStorage:", e)
       return null
@@ -65,17 +62,14 @@ export function Example() {
         token.decimals === 0
       ) {
         console.log("fetching token info...")
-        const deployer = (await getDeployedTestAccountsWallets(pxe))[0]
-        const tokenContract = await TokenContract.at(
-          AztecAddress.fromString(token.address),
-          deployer,
-        )
         const name = readFieldCompressedString(
-          await tokenContract.methods.public_get_name().simulate(),
+          (await tokenContract.methods.public_get_name().simulate()) as any,
         )
+
         const symbol = readFieldCompressedString(
-          await tokenContract.methods.public_get_symbol().simulate(),
+          (await tokenContract.methods.public_get_symbol().simulate()) as any,
         )
+
         const decimals = await tokenContract.methods.public_get_decimals().simulate()
 
         setToken({
@@ -149,9 +143,7 @@ export function Example() {
         .simulate()
       console.log("privateBalance: ", privateBalance)
 
-      const deployer = (await getDeployedTestAccountsWallets(pxe))[0]
-      const tokenWithDeployer = await TokenContract.at(tokenContract.address, deployer)
-      const publicBalance = await tokenWithDeployer.methods
+      const publicBalance = await tokenContract.methods
         .balance_of_public(account.getAddress())
         .simulate()
 
@@ -174,7 +166,6 @@ export function Example() {
   useEffect(() => {
     if (token && account) {
       const initTokenContract = async () => {
-        const Token = Contract.fromAztec(TokenContract, TokenContractArtifact)
         const tokenContract = await Token.at(AztecAddress.fromString(token.address), account)
         setTokenContract(tokenContract)
       }
@@ -278,30 +269,22 @@ export function Example() {
 
     setLoading(true)
 
-    const deployer = (await getDeployedTestAccountsWallets(pxe))[0]
-    const deployTx = await TokenContract.deploy(
-      deployer,
-      deployer.getAddress(),
-      "Token",
-      "TEST",
-      18n,
-    )
+    const deployTx = await Token.deploy(account, account.getAddress(), "Token", "TEST", 18n)
       .send()
       .wait()
     console.log("deployTx: ", deployTx)
 
     const tokenContract = deployTx.contract
     await tokenContract.methods
-      .mint_to_private(deployer.getAddress(), deployer.getAddress(), 1000e18)
+      .mint_to_private(account.getAddress(), account.getAddress(), 1000e18)
       .send()
       .wait()
     await tokenContract.methods
-      .transfer_in_private(deployer.getAddress(), account.address, 1000e18, 0)
+      .transfer_in_private(account.getAddress(), account.address, 1000e18, 0)
       .send()
       .wait()
     await tokenContract.methods.mint_to_public(account.address, 1000e18).send().wait()
 
-    const Token = Contract.fromAztec(TokenContract, TokenContractArtifact)
     const token = await Token.at(tokenContract.address, account)
     setTokenContract(token)
 
@@ -419,7 +402,7 @@ export function Example() {
         <Button
           onClick={async () => {
             console.log("connecting...")
-            const account = await sdk.connect()
+            const account = await sdk.connect("obsidion")
             console.log("account: ", account)
           }}
         >
