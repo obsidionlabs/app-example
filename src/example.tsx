@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react"
 import { Button, Checkbox, Loader, Stack, Text, TextInput } from "@mantine/core"
 import { AztecAddress, createPXEClient, readFieldCompressedString } from "@aztec/aztec.js"
-import { TokenContract } from "@aztec/noir-contracts.js/Token"
-import { Contract, IntentAction } from "@shieldswap/wallet-sdk/eip1193"
+import { TokenContract, TokenContractArtifact } from "@aztec/noir-contracts.js/Token"
+import { BatchCall, Contract, IntentAction } from "@shieldswap/wallet-sdk/eip1193"
 import { useAccount } from "@shieldswap/wallet-sdk/react"
 import { AztecWalletSdk, obsidion } from "@shieldswap/wallet-sdk"
 import { formatUnits, parseUnits } from "viem"
@@ -275,15 +275,24 @@ export function Example() {
     console.log("deployTx: ", deployTx)
 
     const tokenContract = deployTx.contract
-    await tokenContract.methods
+    const mintPrivateTx = await tokenContract.methods
       .mint_to_private(account.getAddress(), account.getAddress(), 1000e18)
-      .send()
-      .wait()
-    await tokenContract.methods
-      .transfer_in_private(account.getAddress(), account.address, 1000e18, 0)
-      .send()
-      .wait()
-    await tokenContract.methods.mint_to_public(account.address, 1000e18).send().wait()
+      .request()
+    const mintPublicTx = await tokenContract.methods
+      .mint_to_public(account.address, 1000e18)
+      .request()
+
+    const batchedTx = new BatchCall(account, [mintPrivateTx, mintPublicTx], {
+      registerContracts: [
+        {
+          address: tokenContract.address,
+          instance: tokenContract.instance,
+          artifact: TokenContractArtifact,
+        },
+      ],
+    })
+    const batchedTxHash = await batchedTx.send().wait()
+    console.log("batchedTxHash: ", batchedTxHash)
 
     const token = await Token.at(tokenContract.address, account)
     setTokenContract(token)
