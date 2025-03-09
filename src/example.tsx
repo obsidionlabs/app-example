@@ -8,7 +8,7 @@ import { useAccount } from "@shieldswap/wallet-sdk/react"
 import { AztecWalletSdk, obsidion } from "@shieldswap/wallet-sdk"
 import { fallbackOpenPopup } from "./fallback"
 
-class Token extends Contract.fromAztec(TokenContract) {}
+class Token extends Contract.fromAztec(TokenContract) { }
 
 const NODE_URL = "http://localhost:8080" // or "https://pxe.obsidion.xyz"
 // const NODE_URL = "https://pxe.obsidion.xyz"
@@ -16,11 +16,12 @@ const NODE_URL = "http://localhost:8080" // or "https://pxe.obsidion.xyz"
 const sdk = new AztecWalletSdk({
   aztecNode: NODE_URL,
   fallbackOpenPopup,
-  adapters: [obsidion({
-    walletUrl: "http://localhost:5173",
-    projectId: "067a11239d95dd939ee98ea22bde21da",
-  })],
-});
+  adapters: [
+    obsidion({
+      projectId: "067a11239d95dd939ee98ea22bde21da",
+    }),
+  ],
+})
 
 export function Example() {
   const account = useAccount(sdk)

@@ -24,8 +24,8 @@ importers:
         specifier: ^7.3.2
         version: 7.17.1(@mantine/core@7.17.1(@mantine/hooks@7.17.1(react@18.3.1))(@types/react@18.3.18)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@mantine/hooks@7.17.1(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@shieldswap/wallet-sdk':
-        specifier: 0.76.1-next.5
-        version: 0.76.1-next.5(@types/react@18.3.18)(react@18.3.1)(typescript@5.0.4)(zod@3.24.2)
+        specifier: 0.76.1-next.9
+        version: 0.76.1-next.9(@types/react@18.3.18)(react@18.3.1)(typescript@5.0.4)(zod@3.24.2)
       react:
         specifier: ^18.2.0
         version: 18.3.1
@@ -727,8 +727,8 @@ packages:
   '@scure/bip39@1.5.4':
     resolution: {integrity: sha512-TFM4ni0vKvCfBpohoh+/lY05i9gRbSwXWngAsF4CABQxoaOHijxuaZ2R6cStDQ5CHtHO9aGJTr4ksVJASRRyMA==}
 
-  '@shieldswap/wallet-sdk@0.76.1-next.5':
-    resolution: {integrity: sha512-i9D9Z9n4sNB9Ns4BT1sKOez9RV04nJdZ/FLkiRdQV6dHbE+Oakn+N9EOzMbhi+zJTtGZLH+4msDf7kH5DkfKdw==}
+  '@shieldswap/wallet-sdk@0.76.1-next.9':
+    resolution: {integrity: sha512-TDhupY0+GJmTFAJPR1POs+yObEgKYr6Ie8zrU5dhVT1yqJDBm/Q76JQ5YavGX75U3DzNUSNsRRqMu2X1RbnHRA==}
     peerDependencies:
       react: ^18.0.0
     peerDependenciesMeta:
@@ -2432,6 +2432,9 @@ packages:
   locate-path@6.0.0:
     resolution: {integrity: sha512-iPZK6eYjbxRu3uB4/WZ3EsEIMJFMqAoopl3R+zuq0UjcAm/MO6KCweDgPfP3elTztoKP3KtnVHxTn2NHBSDVUw==}
     engines: {node: '>=10'}
+
+  lodash-es@4.17.21:
+    resolution: {integrity: sha512-mKnC+QJ9pWVzv+C4/U3rRsHapFfHvQFoFB92e52xeyGMcX6/OlIl78je1u8vePzYZSkkogMPJ2yjxxsb89cxyw==}
 
   lodash.chunk@4.2.0:
     resolution: {integrity: sha512-ZzydJKfUHJwHa+hF5X66zLFCBrWn5GeF28OHEr4WVWtNDXlQ/IjWKPBiikqKo2ne0+v6JgCgJ0GzJp8k8bHC7w==}
@@ -4598,7 +4601,7 @@ snapshots:
       '@noble/hashes': 1.7.1
       '@scure/base': 1.2.4
 
-  '@shieldswap/wallet-sdk@0.76.1-next.5(@types/react@18.3.18)(react@18.3.1)(typescript@5.0.4)(zod@3.24.2)':
+  '@shieldswap/wallet-sdk@0.76.1-next.9(@types/react@18.3.18)(react@18.3.1)(typescript@5.0.4)(zod@3.24.2)':
     dependencies:
       '@aztec/aztec.js': 0.76.1(typescript@5.0.4)(zod@3.24.2)
       '@aztec/circuit-types': 0.76.1(typescript@5.0.4)
@@ -4608,6 +4611,7 @@ snapshots:
       '@walletconnect/modal-sign-html': 2.7.0(@types/react@18.3.18)(react@18.3.1)
       '@walletconnect/universal-provider': 2.19.0(typescript@5.0.4)(zod@3.24.2)
       '@walletconnect/utils': 2.19.0(typescript@5.0.4)(zod@3.24.2)
+      lodash-es: 4.17.21
       ox: 0.6.9(typescript@5.0.4)(zod@3.24.2)
       svelte: 5.20.5
       svelte-persisted-store: 0.11.0(svelte@5.20.5)
@@ -6949,6 +6953,8 @@ snapshots:
     dependencies:
       p-locate: 5.0.0
 
+  lodash-es@4.17.21: {}
+
   lodash.chunk@4.2.0: {}
 
   lodash.clonedeep@4.5.0: {}
@@ -7219,11 +7225,11 @@ snapshots:
   ox@0.6.0(typescript@5.0.4)(zod@3.24.2):
     dependencies:
       '@adraffy/ens-normalize': 1.11.0
-      '@noble/curves': 1.7.0
-      '@noble/hashes': 1.6.1
-      '@scure/bip32': 1.6.0
-      '@scure/bip39': 1.5.0
-      abitype: 1.0.7(typescript@5.0.4)(zod@3.24.2)
+      '@noble/curves': 1.8.1
+      '@noble/hashes': 1.7.1
+      '@scure/bip32': 1.6.2
+      '@scure/bip39': 1.5.4
+      abitype: 1.0.8(typescript@5.0.4)(zod@3.24.2)
       eventemitter3: 5.0.1
     optionalDependencies:
       typescript: 5.0.4
@@ -8314,8 +8320,8 @@ snapshots:
 
   webauthn-p256@0.0.10:
     dependencies:
-      '@noble/curves': 1.7.0
-      '@noble/hashes': 1.6.1
+      '@noble/curves': 1.8.1
+      '@noble/hashes': 1.7.1
 
   webidl-conversions@3.0.1: {}
 
