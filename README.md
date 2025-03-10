@@ -2,57 +2,54 @@
 
 ## Basic Info
 
-- Obsidion app: https://obsidion.vercel.app/
+- Obsidion app: https://app.obsidion.xyz/
 - Our hosted PXE url: https://pxe.obsidion.xyz/
 - aztec-package/sandbox version: _0.76.1_
 - wallet sdk: https://www.npmjs.com/package/@shieldswap/wallet-sdk
-  - \*use 0.76.1-obsidion.9 version of this sdk.
+  - \*use 0.76.1-next.10 version of this sdk.
 
 ### 1. install obsidion wallet sdk
 
 ```shell
-pnpm i @shieldswap/wallet-sdk@0.76.1-obsidion.9
+pnpm i @shieldswap/wallet-sdk@0.76.1-next.10
 ```
 
 ### 2. how to use sdk
 
 ```tsx
-import { ReownPopupWalletSdk } from "@shieldswap/wallet-sdk"
+import { AztecWalletSdk, obsidion } from "@shieldswap/wallet-sdk"
 import { Contract } from "@shieldswap/wallet-sdk/eip1193"
 import { TokenContract, TokenContractArtifact } from "@aztec/noir-contracts.js/Token"
 
-const PXE_URL = "https://pxe.obsidion.xyz" // or http://localhost:8080
-const pxe = createPXEClient(PXE_URL)
+const NODE_URL = "http://localhost:8080" // or "http://35.227.171.86:8080" ( devnet )
+const pxe = createPXEClient(NODE_URL)
 
-const wcOptions = {
-  // you can obtain your own project id from https://cloud.reown.com/sign-up
-  projectId: "067a11239d95dd939ee98ea22bde21da",
-}
+// reown ( formerly wallet connect ) project id
+const PROJECT_ID = "067a11239d95dd939ee98ea22bde21da"
 
-const params = {
-  walletUrl: "https://app.obsidion.xyz",
-}
-
-const sdk = new ReownPopupWalletSdk(pxe, wcOptions, params)
+const sdk = new AztecWalletSdk({
+  aztecNode: NODE_URL,
+  connectors: [obsidion({ projectId: PROJECT_ID })],
+})
 
 // example method that does...
 // 1. connect to wallet
 // 2. instantiate token contract
 // 3. send tx
 
+class Token extends Contract.fromAztec(TokenContract) {}
+
 const exampleMethod = async () => {
   // instantiate wallet sdk
-  const account = await sdk.connect()
+  const account = await sdk.connect("obsidion")
 
-  // instantiate token contract
-  const Token = Contract.fromAztec(TokenContract, TokenContractArtifact)
-  const tokenAddress = "0x0000...00000"
+  const tokenAddress = AztecAddress.fromString("0x0000...00000")
   const token = await Token.at(tokenAddress, account.getAddress())
 
   // send tx
   const tx = await token.methods.transfer(account.getAddress(), 100).send().wait()
   // simulate tx
-  const simulateTx = await token.methods.balance_of_private(account.getAddress()).simulate()
+  const balance = await token.methods.balance_of_private(account.getAddress()).simulate()
 }
 
 exampleMethod()
@@ -64,8 +61,9 @@ For more details, see the [src/example.tsx](./src/example.tsx)
 
 ### Change Sandbox URL & L1 RPC URL
 
-it's recommended to use your own local sandbox if you can as our hosted sandbox is a bit slower. you
-can switch network to sandbox in Settings > Networks in the Obsidion Wallet UI.
+it's recommended to develop with your own local sandbox if you can as devnet with our hosted pxe at
+`https://pxe.obsidion.xyz` is still slower and unstable. you can switch network to sandbox in
+Settings > Networks in the Obsidion Wallet UI.
 
 ## Advanced Mode
 
