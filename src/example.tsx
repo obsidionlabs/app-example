@@ -15,7 +15,7 @@ const PROJECT_ID = "067a11239d95dd939ee98ea22bde21da"
 
 const sdk = new AztecWalletSdk({
   aztecNode: NODE_URL,
-  adapters: [obsidion({ walletUrl: WALLET_URL, projectId: PROJECT_ID })],
+  connectors: [obsidion({ walletUrl: WALLET_URL, projectId: PROJECT_ID })],
 })
 
 type TokenType = {
