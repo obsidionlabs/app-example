@@ -6,12 +6,12 @@
 - Our hosted PXE url: https://pxe.obsidion.xyz/
 - aztec-package/sandbox version: _0.76.1_
 - wallet sdk: https://www.npmjs.com/package/@shieldswap/wallet-sdk
-  - \*use 0.76.1-next.10 version of this sdk.
+  - \*use 0.76.1-next.11 version of this sdk.
 
 ### 1. install obsidion wallet sdk
 
 ```shell
-pnpm i @shieldswap/wallet-sdk@0.76.1-next.10
+pnpm i @shieldswap/wallet-sdk@0.76.1-next.11
 ```
 
 ### 2. how to use sdk
