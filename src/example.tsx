@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { Button, Checkbox, Loader, Stack, Text, TextInput } from "@mantine/core"
-import { AztecAddress, createPXEClient, readFieldCompressedString } from "@aztec/aztec.js"
+import { AztecAddress, readFieldCompressedString } from "@aztec/aztec.js"
 import { TokenContract, TokenContractArtifact } from "@aztec/noir-contracts.js/Token"
 import { BatchCall, Contract, IntentAction } from "@shieldswap/wallet-sdk/eip1193"
 import { useAccount } from "@shieldswap/wallet-sdk/react"
@@ -10,8 +10,6 @@ import { formatUnits, parseUnits } from "viem"
 class Token extends Contract.fromAztec(TokenContract) {}
 
 const NODE_URL = "http://localhost:8080" // or "https://pxe.obsidion.xyz"
-const pxe = createPXEClient(NODE_URL)
-
 const WALLET_URL = "http://localhost:5173"
 const PROJECT_ID = "067a11239d95dd939ee98ea22bde21da"
 
@@ -116,11 +114,6 @@ export function Example() {
     console.log("fetching balances...")
     console.log("account: ", account)
     console.log("tokenContract: ", tokenContract)
-
-    if (!pxe) {
-      setError("PXE not found")
-      return
-    }
 
     if (!account) {
       setError("Account not found")
