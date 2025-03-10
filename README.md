@@ -21,7 +21,7 @@ import { AztecWalletSdk, obsidion } from "@shieldswap/wallet-sdk"
 import { Contract } from "@shieldswap/wallet-sdk/eip1193"
 import { TokenContract, TokenContractArtifact } from "@aztec/noir-contracts.js/Token"
 
-const NODE_URL = "http://localhost:8080" // or "https://pxe.obsidion.xyz"
+const NODE_URL = "http://localhost:8080" // or "http://35.227.171.86:8080" ( devnet )
 const pxe = createPXEClient(NODE_URL)
 
 // reown ( formerly wallet connect ) project id
@@ -61,8 +61,9 @@ For more details, see the [src/example.tsx](./src/example.tsx)
 
 ### Change Sandbox URL & L1 RPC URL
 
-it's recommended to use your own local sandbox if you can as our hosted sandbox is a bit slower. you
-can switch network to sandbox in Settings > Networks in the Obsidion Wallet UI.
+it's recommended to develop with your own local sandbox if you can as devnet with our hosted pxe at
+`https://pxe.obsidion.xyz` is still slower and unstable. you can switch network to sandbox in
+Settings > Networks in the Obsidion Wallet UI.
 
 ## Advanced Mode
 
