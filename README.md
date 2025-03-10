@@ -24,6 +24,7 @@ import { TokenContract, TokenContractArtifact } from "@aztec/noir-contracts.js/T
 const NODE_URL = "http://localhost:8080" // or "https://pxe.obsidion.xyz"
 const pxe = createPXEClient(NODE_URL)
 
+// reown ( formerly wallet connect ) project id
 const PROJECT_ID = "067a11239d95dd939ee98ea22bde21da"
 
 const sdk = new AztecWalletSdk({
