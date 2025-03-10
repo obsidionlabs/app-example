@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { Button, Checkbox, Loader, Stack, Text, TextInput } from "@mantine/core"
-import { AztecAddress, Fr, readFieldCompressedString } from "@aztec/aztec.js"
+import { AztecAddress, readFieldCompressedString } from "@aztec/aztec.js"
 import { TokenContract, TokenContractArtifact } from "@aztec/noir-contracts.js/Token"
 import { BatchCall, Contract, IntentAction } from "@shieldswap/wallet-sdk/eip1193"
 import { useAccount } from "@shieldswap/wallet-sdk/react"
@@ -255,6 +255,8 @@ export function Example() {
   }
 
   const handleMintToken = async () => {
+    setError(null)
+
     if (!account) {
       setError("Account not found")
       setLoading(false)
