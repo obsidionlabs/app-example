@@ -8,7 +8,7 @@ export default defineConfig({
   plugins: [
     process.env.NODE_ENV === "production"
       ? /** @type {any} */ resolve({
-          "@aztec/bb.js": `export * from "https://unpkg.com/@aztec/bb.js@${aztecVersion}/dest/browser/index.js"`,
+          "@aztec/bb.js": `export * from "https://unpkg.com/@aztec/bb.js@${aztecVersion}/dist/browser/index.js"`,
         })
       : undefined,
     nodePolyfills({ protocolImports: true }),
