@@ -309,6 +309,13 @@ export function Example() {
     }
   }
 
+  const handleRemoveToken = async () => {
+    setError(null)
+    setToken(null)
+    setTokenContract(null)
+    localStorage.removeItem("token")
+  }
+
   return (
     <Stack align="center" justify="space-between" gap="md" mt={100}>
       <Text size="30px">Example Token App</Text>
@@ -373,10 +380,10 @@ export function Example() {
                 <Button mt={10} onClick={() => handleAddToken()}>
                   Add Token
                 </Button>
+                <Button color="gray" mt={10} onClick={() => handleRemoveToken()}>
+                  Remove Token
+                </Button>
               </div>
-              <Button color="gray" mt={10} onClick={() => sdk.disconnect()}>
-                Disconnect
-              </Button>
               {error && <Text color="red">{error}</Text>}
             </>
           ) : (
@@ -405,6 +412,9 @@ export function Example() {
               {error && <Text color="red">{error}</Text>}
             </>
           )}
+          <Button color="gray" mt={10} onClick={() => sdk.disconnect()}>
+            Disconnect
+          </Button>
         </>
       ) : (
         <Button
