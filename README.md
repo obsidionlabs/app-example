@@ -21,7 +21,7 @@ import { AztecWalletSdk, obsidion } from "@shieldswap/wallet-sdk"
 import { Contract } from "@shieldswap/wallet-sdk/eip1193"
 import { TokenContract, TokenContractArtifact } from "@aztec/noir-contracts.js/Token"
 
-const NODE_URL = "http://localhost:8080" // or "http://35.227.171.86:8080" ( devnet )
+const NODE_URL = "http://localhost:8080" // or "http://104.198.9.16:8080" ( devnet )
 const pxe = createPXEClient(NODE_URL)
 
 // reown ( formerly wallet connect ) project id

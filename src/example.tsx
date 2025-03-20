@@ -1,6 +1,11 @@
 import { useEffect, useState } from "react"
 import { Button, Checkbox, Loader, Stack, Text, TextInput } from "@mantine/core"
-import { AztecAddress, readFieldCompressedString } from "@aztec/aztec.js"
+import {
+  AztecAddress,
+  ContractArtifact,
+  ContractInstanceWithAddress,
+  readFieldCompressedString,
+} from "@aztec/aztec.js"
 import { TokenContract, TokenContractArtifact } from "@aztec/noir-contracts.js/Token"
 import { BatchCall, Contract, IntentAction } from "@shieldswap/wallet-sdk/eip1193"
 import { useAccount } from "@shieldswap/wallet-sdk/react"
@@ -9,7 +14,7 @@ import { formatUnits, parseUnits } from "viem"
 
 class Token extends Contract.fromAztec(TokenContract) {}
 
-const NODE_URL = "http://localhost:8080" // or "http://35.227.171.86:8080"
+const NODE_URL = "http://localhost:8080" // or "http://104.198.9.16:8080"
 const WALLET_URL = "http://localhost:5173" // or "https://app.obsidion.xyz"
 const PROJECT_ID = "067a11239d95dd939ee98ea22bde21da"
 
@@ -29,6 +34,11 @@ export function Example() {
   const account = useAccount(sdk)
 
   const [tokenContract, setTokenContract] = useState<Token | null>(null)
+  const [contractForRegister, setContractForRegister] = useState<{
+    address: AztecAddress
+    instance: ContractInstanceWithAddress
+    artifact: ContractArtifact
+  } | null>(null)
   const [token, setToken] = useState<TokenType | null>(() => {
     const storedToken = localStorage.getItem("token")
     if (!storedToken) return null
@@ -55,17 +65,34 @@ export function Example() {
       if (
         token &&
         tokenContract &&
+        contractForRegister &&
         token.name === "" &&
         token.symbol === "" &&
         token.decimals === 0
       ) {
         console.log("fetching token info...")
+
+        const registerContracts = [
+          {
+            address: contractForRegister.address,
+            instance: contractForRegister.instance,
+            artifact: contractForRegister.artifact,
+          },
+        ]
         const name = readFieldCompressedString(
-          (await tokenContract.methods.public_get_name().simulate()) as any,
+          (await tokenContract.methods
+            .public_get_name({
+              registerContracts,
+            })
+            .simulate()) as any,
         )
 
         const symbol = readFieldCompressedString(
-          (await tokenContract.methods.public_get_symbol().simulate()) as any,
+          (await tokenContract.methods
+            .public_get_symbol({
+              registerContracts,
+            })
+            .simulate()) as any,
         )
 
         const decimals = await tokenContract.methods.public_get_decimals().simulate()
@@ -154,11 +181,16 @@ export function Example() {
   }, [account, tokenContract])
 
   useEffect(() => {
-    if (token && account && token.decimals > 0) {
+    if (token && account) {
       const initTokenContract = async () => {
         try {
           const tokenContract = await Token.at(AztecAddress.fromString(token.address), account)
           setTokenContract(tokenContract)
+          setContractForRegister({
+            address: tokenContract.address,
+            instance: tokenContract.instance,
+            artifact: TokenContractArtifact,
+          })
         } catch (e) {
           console.error("Error initializing token contract: ", e)
         }
