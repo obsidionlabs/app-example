@@ -349,117 +349,432 @@ export function Example() {
   }
 
   return (
-    <Stack align="center" justify="space-between" gap="md" mt={100}>
-      <Text size="30px">Example Token App</Text>
-      <Text my={20} size="18px">
-        This is an example token app that demonstrates app integration with Obsidion Wallet.
-      </Text>
+    <Stack
+      align="center"
+      justify="space-between"
+      gap="md"
+      style={{ maxWidth: "800px", margin: "0 auto", padding: "24px" }}
+    >
+      {/* Header Section */}
+      <div
+        style={{
+          textAlign: "center",
+          marginBottom: "12px",
+          borderBottom: "1px solid #eaeef3",
+          paddingBottom: "20px",
+          width: "100%",
+        }}
+      >
+        <Text size="30px" style={{ fontWeight: 500, marginBottom: "16px" }}>
+          Example Token App
+        </Text>
+        <Text size="16px" color="dimmed" style={{ marginBottom: "16px" }}>
+          This is an example token app that demonstrates app integration with Obsidion Wallet.
+        </Text>
 
+        {/* Configuration Information */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            gap: "24px",
+            marginTop: "16px",
+            fontSize: "12px",
+            color: "#868e96",
+          }}
+        >
+          <div>
+            <span style={{ fontWeight: 500 }}>Node URL:</span> {NODE_URL}
+          </div>
+          <div>
+            <span style={{ fontWeight: 500 }}>Wallet URL:</span> {WALLET_URL}
+          </div>
+        </div>
+      </div>
+
+      {/* Account Display */}
       {account ? (
-        <>
-          <Text size="sm">Connected Account: {account.getAddress().toString()}</Text>
+        <div style={{ width: "100%" }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              backgroundColor: "#f8f9fa",
+              padding: "10px 16px",
+              borderRadius: "8px",
+              marginBottom: "24px",
+            }}
+          >
+            <Text size="sm" w={500}>
+              Connected Account:{" "}
+            </Text>
+            <Text size="sm" color="dimmed" ml={8}>
+              {account.getAddress().toString()}
+            </Text>
+          </div>
+
           {tokenContract && token ? (
             <>
-              <Text size="sm">Token: {token.address}</Text>
-              <div style={{ display: "flex", gap: 10 }}>
-                <Text>
-                  Private Balance: {privateBalance ? `${privateBalance} ${token.symbol}` : "0"}
-                </Text>
-                <Text>
-                  Public Balance: {publicBalance ? `${publicBalance} ${token.symbol}` : "0"}
-                </Text>
-              </div>
-
-              <TextInput
-                style={{ width: "50%" }}
-                placeholder="Amount"
-                value={amount || ""}
-                onChange={(e) => setAmount(e.target.value)}
-              />
-
-              <TextInput
-                style={{ width: "50%" }}
-                placeholder="Recipient"
-                value={recipient || ""}
-                onChange={(e) => setRecipient(e.target.value)}
-              />
-              <Checkbox
-                label="With Random AuthWit ( Just to see how tx confirmation works w/ authwits )"
-                checked={withAuthWitness}
-                onChange={(e) => setWithAuthWitness(e.target.checked)}
-              />
-              <div style={{ display: "flex", gap: 20 }}>
-                <Button
-                  mt={10}
-                  disabled={loading}
-                  onClick={() => handleSendTx(true, withAuthWitness)}
+              {/* Token Info Card */}
+              <div
+                style={{
+                  border: "1px solid #eaeef3",
+                  borderRadius: "12px",
+                  overflow: "hidden",
+                  marginBottom: "24px",
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+                }}
+              >
+                <div
+                  style={{
+                    backgroundColor: "#f8f9fa",
+                    padding: "12px 20px",
+                    borderBottom: "1px solid #eaeef3",
+                  }}
                 >
-                  Send Token (Private)
-                </Button>
-                <Button
-                  mt={10}
-                  disabled={loading}
-                  onClick={() => handleSendTx(false, withAuthWitness)}
-                >
-                  Send Token (Public)
-                </Button>
+                  <Text size="lg" w={600}>
+                    Token Information
+                  </Text>
+                </div>
+
+                <div style={{ padding: "20px" }}>
+                  {/* Token name, symbol and decimals row */}
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      marginBottom: "16px",
+                      flexWrap: "wrap",
+                      gap: "8px",
+                    }}
+                  >
+                    <Text size="xl" style={{ fontWeight: 700, marginRight: "8px" }}>
+                      {token.name}
+                    </Text>
+                    <div
+                      style={{
+                        backgroundColor: "#e9ecef",
+                        padding: "4px 8px",
+                        borderRadius: "4px",
+                        maxWidth: "80px",
+                        textAlign: "center",
+                      }}
+                    >
+                      <Text size="sm" style={{ fontWeight: 600 }}>
+                        {token.symbol}
+                      </Text>
+                    </div>
+                    <div
+                      style={{
+                        marginLeft: "auto",
+                        backgroundColor: "#f1f3f5",
+                        padding: "4px 8px",
+                        borderRadius: "4px",
+                      }}
+                    >
+                      <Text size="sm" color="dimmed">
+                        Decimals: {token.decimals}
+                      </Text>
+                    </div>
+                  </div>
+
+                  {/* Token address section */}
+                  <div
+                    style={{
+                      marginBottom: "16px",
+                      padding: "12px",
+                      backgroundColor: "#f8f9fa",
+                      borderRadius: "8px",
+                      border: "1px solid #eaeef3",
+                    }}
+                  >
+                    <Text size="sm" color="dimmed" mb={4}>
+                      Token Address
+                    </Text>
+                    <Text size="sm" style={{ wordBreak: "break-all", fontFamily: "monospace" }}>
+                      {token.address}
+                    </Text>
+                  </div>
+
+                  {/* Balance section - split clearly into two cards */}
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "1fr 1fr",
+                      gap: "12px",
+                      marginBottom: "16px",
+                    }}
+                  >
+                    {/* Private Balance Card */}
+                    <div
+                      style={{
+                        padding: "16px",
+                        backgroundColor: "#f1f3f5",
+                        borderRadius: "8px",
+                        textAlign: "center",
+                      }}
+                    >
+                      <Text size="sm" color="dimmed" mb={8}>
+                        Private Balance
+                      </Text>
+                      <Text size="lg" style={{ fontWeight: 600 }}>
+                        {privateBalance ? privateBalance : "0"} {token.symbol}
+                      </Text>
+                    </div>
+
+                    {/* Public Balance Card */}
+                    <div
+                      style={{
+                        padding: "16px",
+                        backgroundColor: "#f1f3f5",
+                        borderRadius: "8px",
+                        textAlign: "center",
+                      }}
+                    >
+                      <Text size="sm" color="dimmed" mb={8}>
+                        Public Balance
+                      </Text>
+                      <Text size="lg" style={{ fontWeight: 600 }}>
+                        {publicBalance ? publicBalance : "0"} {token.symbol}
+                      </Text>
+                    </div>
+                  </div>
+
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "center",
+                      gap: "12px",
+                      marginTop: "16px",
+                    }}
+                  >
+                    <Button size="sm" variant="light" onClick={() => handleFetchBalances()}>
+                      Refresh Balances
+                    </Button>
+                    <Button size="sm" variant="light" onClick={() => handleAddToken()}>
+                      Add to Wallet
+                    </Button>
+                  </div>
+                </div>
               </div>
 
-              <div style={{ display: "flex", gap: 20 }}>
-                <Button mt={10} onClick={() => handleFetchBalances()}>
-                  Fetch Balances
-                </Button>
-                <Button mt={10} onClick={() => handleAddToken()}>
-                  Add Token
-                </Button>
-                <Button color="gray" mt={10} onClick={() => handleRemoveToken()}>
-                  Remove Token
-                </Button>
+              {/* Transfer Section */}
+              <div
+                style={{
+                  border: "1px solid #eaeef3",
+                  borderRadius: "12px",
+                  overflow: "hidden",
+                  marginBottom: "24px",
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+                }}
+              >
+                <div
+                  style={{
+                    backgroundColor: "#f8f9fa",
+                    padding: "12px 20px",
+                    borderBottom: "1px solid #eaeef3",
+                  }}
+                >
+                  <Text size="lg" w={600}>
+                    Transfer Tokens
+                  </Text>
+                </div>
+
+                <div style={{ padding: "20px" }}>
+                  <TextInput
+                    label="Amount"
+                    placeholder="Enter amount to send"
+                    value={amount || ""}
+                    onChange={(e) => setAmount(e.target.value)}
+                    mb={16}
+                    styles={{
+                      root: { marginBottom: "16px" },
+                      label: { marginBottom: "8px", fontw: 500 },
+                    }}
+                  />
+
+                  <TextInput
+                    label="Recipient Address"
+                    placeholder="0x..."
+                    value={recipient || ""}
+                    onChange={(e) => setRecipient(e.target.value)}
+                    styles={{
+                      root: { marginBottom: "16px" },
+                      label: { marginBottom: "8px", fontWeight: 500 },
+                    }}
+                  />
+
+                  <Checkbox
+                    label="Include Auth Witness (for demo purposes)"
+                    checked={withAuthWitness}
+                    onChange={(e) => setWithAuthWitness(e.target.checked)}
+                    styles={{ label: { fontSize: "14px" } }}
+                    mb={20}
+                  />
+
+                  <div style={{ display: "flex", gap: "12px", justifyContent: "center" }}>
+                    <Button disabled={loading} onClick={() => handleSendTx(true, withAuthWitness)}>
+                      Send Private
+                    </Button>
+                    <Button
+                      variant="light"
+                      disabled={loading}
+                      onClick={() => handleSendTx(false, withAuthWitness)}
+                    >
+                      Send Public
+                    </Button>
+                  </div>
+
+                  {error && (
+                    <div
+                      style={{
+                        backgroundColor: "#fff5f5",
+                        color: "#e03131",
+                        padding: "12px",
+                        borderRadius: "6px",
+                        marginTop: "16px",
+                      }}
+                    >
+                      <Text size="sm">{error}</Text>
+                    </div>
+                  )}
+                </div>
               </div>
-              {error && <Text color="red">{error}</Text>}
             </>
           ) : (
             <>
-              <Text mt={20}>Use any deployed token or deploy TEST token</Text>
-              <TextInput
-                label="Token Address"
-                style={{ width: "50%" }}
-                placeholder="0x..."
-                value={token?.address || ""}
-                onChange={(e) => {
-                  setToken({
-                    address: e.target.value,
-                    name: "",
-                    symbol: "",
-                    decimals: 0,
-                  })
-                  localStorage.setItem("token", JSON.stringify(token))
+              {/* Token Setup Card */}
+              <div
+                style={{
+                  border: "1px solid #eaeef3",
+                  borderRadius: "12px",
+                  overflow: "hidden",
+                  marginBottom: "24px",
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
                 }}
-              />
-              <div style={{ display: "flex", gap: 20 }}>
-                <Button mt={10} disabled={loading} onClick={() => handleMintToken()}>
-                  Deploy & Mint TEST Token
-                </Button>
+              >
+                <div
+                  style={{
+                    backgroundColor: "#f8f9fa",
+                    padding: "12px 20px",
+                    borderBottom: "1px solid #eaeef3",
+                  }}
+                >
+                  <Text size="lg" w={600}>
+                    Token Setup
+                  </Text>
+                </div>
+
+                <div style={{ padding: "20px" }}>
+                  <Text mb={16} style={{ textAlign: "center" }}>
+                    Use any deployed token or deploy a new TEST token
+                  </Text>
+
+                  <TextInput
+                    label="Token Address"
+                    placeholder="0x..."
+                    value={token?.address || ""}
+                    onChange={(e) => {
+                      setToken({
+                        address: e.target.value,
+                        name: "",
+                        symbol: "",
+                        decimals: 0,
+                      })
+                      localStorage.setItem("token", JSON.stringify(token))
+                    }}
+                    styles={{
+                      root: { marginBottom: "20px" },
+                      label: { marginBottom: "8px", fontWeight: 500 },
+                    }}
+                  />
+
+                  <Text size="sm" color="dimmed" mb={16} style={{ textAlign: "center" }}>
+                    - OR -
+                  </Text>
+
+                  <div style={{ textAlign: "center" }}>
+                    <Button disabled={loading} onClick={() => handleMintToken()}>
+                      🪙 Deploy & Mint TEST Token
+                    </Button>
+                  </div>
+
+                  {error && (
+                    <div
+                      style={{
+                        backgroundColor: "#fff5f5",
+                        color: "#e03131",
+                        padding: "12px",
+                        borderRadius: "6px",
+                        marginTop: "16px",
+                      }}
+                    >
+                      <Text size="sm">{error}</Text>
+                    </div>
+                  )}
+                </div>
               </div>
-              {error && <Text color="red">{error}</Text>}
             </>
           )}
-          <Button color="gray" mt={10} onClick={() => sdk.disconnect()}>
-            Disconnect
-          </Button>
-        </>
+
+          {/* Loading Indicator */}
+          {loading ? (
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                marginTop: "20px",
+              }}
+            >
+              <Loader size="sm" />
+              <Text ml={10} size="sm" color="dimmed">
+                Processing transaction...
+              </Text>
+            </div>
+          ) : (
+            <div style={{ display: "flex", gap: "12px", justifyContent: "center" }}>
+              <Button size="sm" variant="subtle" color="gray" onClick={() => handleRemoveToken()}>
+                Remove Token
+              </Button>
+
+              {/* Disconnect Button */}
+              <div style={{ textAlign: "center" }}>
+                <Button variant="subtle" color="gray" onClick={() => sdk.disconnect()}>
+                  Disconnect Wallet
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
       ) : (
-        <Button
-          onClick={async () => {
-            console.log("connecting...")
-            const account = await sdk.connect("obsidion")
-            console.log("account: ", account)
+        // Not Connected State
+        <div
+          style={{
+            width: "100%",
+            padding: "40px 20px",
+            textAlign: "center",
+            borderRadius: "12px",
+            border: "1px dashed #dee2e6",
+            backgroundColor: "#f8f9fa",
           }}
         >
-          Connect
-        </Button>
+          <Text mb={24} size="lg">
+            Connect your wallet to get started
+          </Text>
+          <Button
+            size="lg"
+            onClick={async () => {
+              console.log("connecting...")
+              const account = await sdk.connect("obsidion")
+              console.log("account: ", account)
+            }}
+          >
+            Connect Wallet
+          </Button>
+        </div>
       )}
-      {loading && <Loader mt={10} size="sm" />}
     </Stack>
   )
 }
