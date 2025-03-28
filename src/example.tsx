@@ -7,20 +7,19 @@ import {
   readFieldCompressedString,
 } from "@aztec/aztec.js"
 import { TokenContract, TokenContractArtifact } from "@aztec/noir-contracts.js/Token"
-import { BatchCall, Contract, IntentAction } from "@shieldswap/wallet-sdk/eip1193"
-import { useAccount } from "@shieldswap/wallet-sdk/react"
-import { AztecWalletSdk, obsidion } from "@shieldswap/wallet-sdk"
+import { BatchCall, Contract, IntentAction } from "./sdk/exports/eip1193"
+import { useAccount } from "./sdk/exports/react"
+import { AztecWalletSdk, obsidion } from "./sdk/exports"
 import { formatUnits, parseUnits } from "viem"
 
 class Token extends Contract.fromAztec(TokenContract) {}
 
 const NODE_URL = "http://localhost:8080" // or "http://104.198.9.16:8080"
 const WALLET_URL = "http://localhost:5173" // or "https://app.obsidion.xyz"
-const PROJECT_ID = "067a11239d95dd939ee98ea22bde21da"
 
 const sdk = new AztecWalletSdk({
   aztecNode: NODE_URL,
-  connectors: [obsidion({ walletUrl: WALLET_URL, projectId: PROJECT_ID })],
+  connectors: [obsidion({ walletUrl: WALLET_URL })],
 })
 
 type TokenType = {
@@ -53,8 +52,13 @@ export function Example() {
   const [privateBalance, setPrivateBalance] = useState<string | null>(null)
   const [publicBalance, setPublicBalance] = useState<string | null>(null)
 
-  const [amount, setAmount] = useState<string | null>(null)
-  const [recipient, setRecipient] = useState<string | null>(null)
+  // const [amount, setAmount] = useState<string | null>(null);
+  // const [recipient, setRecipient] = useState<string | null>(null);
+  const [amount, setAmount] = useState<string | null>("0.1")
+  const [recipient, setRecipient] = useState<string | null>(
+    "0x0a6ee5988dd20f6d884127cbe27df2c2c5e57cf83f37228af2a70c14d7d45e3f",
+  )
+
   const [withAuthWitness, setWithAuthWitness] = useState<boolean>(false)
   const [loading, setLoading] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
@@ -63,6 +67,7 @@ export function Example() {
     const loadToken = async () => {
       console.log("token: ", token, tokenContract)
       if (
+        account &&
         token &&
         tokenContract &&
         contractForRegister &&
@@ -72,27 +77,12 @@ export function Example() {
       ) {
         console.log("fetching token info...")
 
-        const registerContracts = [
-          {
-            address: contractForRegister.address,
-            instance: contractForRegister.instance,
-            artifact: contractForRegister.artifact,
-          },
-        ]
         const name = readFieldCompressedString(
-          (await tokenContract.methods
-            .public_get_name({
-              registerContracts,
-            })
-            .simulate()) as any,
+          (await tokenContract.methods.public_get_name({}).simulate()) as any,
         )
 
         const symbol = readFieldCompressedString(
-          (await tokenContract.methods
-            .public_get_symbol({
-              registerContracts,
-            })
-            .simulate()) as any,
+          (await tokenContract.methods.public_get_symbol({}).simulate()) as any,
         )
 
         const decimals = await tokenContract.methods.public_get_decimals().simulate()
@@ -142,32 +132,30 @@ export function Example() {
     console.log("account: ", account)
     console.log("tokenContract: ", tokenContract)
 
+    // wait 10 seconds
+    await new Promise((resolve) => setTimeout(resolve, 10000))
+
     if (!account) {
       setError("Account not found")
       return
     }
-
-    if (!token) {
+    if (!token || token.decimals === 0) {
       setError("Token contract not found")
       return
     }
-
     if (!tokenContract) {
       setError("Token contract not found")
       return
     }
-
     try {
       const [privateBalance, publicBalance] = await Promise.all([
         tokenContract.methods.balance_of_private(account.getAddress()).simulate(),
         tokenContract.methods.balance_of_public(account.getAddress()).simulate(),
       ])
-
       console.log("privateBalance: ", privateBalance)
       console.log("publicBalance: ", publicBalance)
-
-      setPublicBalance(formatUnits(BigInt(publicBalance.toString()), token.decimals))
-      setPrivateBalance(formatUnits(BigInt(privateBalance.toString()), token.decimals))
+      setPublicBalance(formatUnits(publicBalance as bigint, token.decimals))
+      setPrivateBalance(formatUnits(privateBalance as bigint, token.decimals))
     } catch (e) {
       setError("Error fetching balances")
       console.error("Error fetching balances: ", e)
@@ -175,10 +163,10 @@ export function Example() {
   }
 
   useEffect(() => {
-    if (account && tokenContract) {
+    if (account && tokenContract && token) {
       handleFetchBalances()
     }
-  }, [account, tokenContract])
+  }, [account, tokenContract, token])
 
   useEffect(() => {
     if (token && account) {
@@ -276,14 +264,16 @@ export function Example() {
         .send()
         .wait()
       console.log("txHash: ", txHash)
-    } catch (e) {
-      setError("Error sending transaction")
-      setLoading(false)
-      return
-    }
 
-    setLoading(false)
-    handleFetchBalances()
+      console.log("fetching balances after sending tx")
+      handleFetchBalances()
+    } catch (e) {
+      console.error("Error sending transaction: ", e)
+      setError("Error sending transaction")
+      return
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleMintToken = async () => {
@@ -492,7 +482,13 @@ export function Example() {
                     <Text size="sm" color="dimmed" mb={4}>
                       Token Address
                     </Text>
-                    <Text size="sm" style={{ wordBreak: "break-all", fontFamily: "monospace" }}>
+                    <Text
+                      size="sm"
+                      style={{
+                        wordBreak: "break-all",
+                        fontFamily: "monospace",
+                      }}
+                    >
                       {token.address}
                     </Text>
                   </div>
@@ -583,6 +579,17 @@ export function Example() {
 
                 <div style={{ padding: "20px" }}>
                   <TextInput
+                    label="Recipient Address"
+                    placeholder="0x..."
+                    value={recipient || ""}
+                    onChange={(e) => setRecipient(e.target.value)}
+                    styles={{
+                      root: { marginBottom: "16px" },
+                      label: { marginBottom: "8px", fontWeight: 500 },
+                    }}
+                  />
+
+                  <TextInput
                     label="Amount"
                     placeholder="Enter amount to send"
                     value={amount || ""}
@@ -594,17 +601,6 @@ export function Example() {
                     }}
                   />
 
-                  <TextInput
-                    label="Recipient Address"
-                    placeholder="0x..."
-                    value={recipient || ""}
-                    onChange={(e) => setRecipient(e.target.value)}
-                    styles={{
-                      root: { marginBottom: "16px" },
-                      label: { marginBottom: "8px", fontWeight: 500 },
-                    }}
-                  />
-
                   <Checkbox
                     label="Include Auth Witness (for demo purposes)"
                     checked={withAuthWitness}
@@ -613,7 +609,13 @@ export function Example() {
                     mb={20}
                   />
 
-                  <div style={{ display: "flex", gap: "12px", justifyContent: "center" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: "12px",
+                      justifyContent: "center",
+                    }}
+                  >
                     <Button disabled={loading} onClick={() => handleSendTx(true, withAuthWitness)}>
                       Send Private
                     </Button>
