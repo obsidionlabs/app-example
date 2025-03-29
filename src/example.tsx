@@ -1,5 +1,17 @@
 import { useEffect, useState } from "react"
-import { Button, Checkbox, Loader, Stack, Text, TextInput } from "@mantine/core"
+import {
+  ActionIcon,
+  Button,
+  Checkbox,
+  CheckIcon,
+  CopyButton,
+  Loader,
+  Stack,
+  Text,
+  TextInput,
+  Tooltip,
+} from "@mantine/core"
+import { IconCopy } from "@tabler/icons-react"
 import {
   AztecAddress,
   ContractArtifact,
@@ -52,12 +64,8 @@ export function Example() {
   const [privateBalance, setPrivateBalance] = useState<string | null>(null)
   const [publicBalance, setPublicBalance] = useState<string | null>(null)
 
-  // const [amount, setAmount] = useState<string | null>(null);
-  // const [recipient, setRecipient] = useState<string | null>(null);
-  const [amount, setAmount] = useState<string | null>("0.1")
-  const [recipient, setRecipient] = useState<string | null>(
-    "0x0a6ee5988dd20f6d884127cbe27df2c2c5e57cf83f37228af2a70c14d7d45e3f",
-  )
+  const [amount, setAmount] = useState<string | null>(null)
+  const [recipient, setRecipient] = useState<string | null>(null)
 
   const [withAuthWitness, setWithAuthWitness] = useState<boolean>(false)
   const [loading, setLoading] = useState<boolean>(false)
@@ -131,9 +139,6 @@ export function Example() {
     console.log("fetching balances...")
     console.log("account: ", account)
     console.log("tokenContract: ", tokenContract)
-
-    // wait 10 seconds
-    await new Promise((resolve) => setTimeout(resolve, 10000))
 
     if (!account) {
       setError("Account not found")
@@ -393,15 +398,26 @@ export function Example() {
               backgroundColor: "#f8f9fa",
               padding: "10px 16px",
               borderRadius: "8px",
-              marginBottom: "24px",
+              width: "50%",
+              margin: "0 auto",
+              marginBottom: "32px",
             }}
           >
-            <Text size="sm" w={500}>
-              Connected Account:{" "}
+            <Text size="md" w={500}>
+              Connected:{" "}
             </Text>
-            <Text size="sm" color="dimmed" ml={8}>
-              {account.getAddress().toString()}
+            <Text size="md" color="dimmed" mx={8}>
+              {shortenAddress(account.getAddress().toString())}
             </Text>
+            <CopyButton value={account.getAddress().toString()} timeout={2000}>
+              {({ copied, copy }) => (
+                <Tooltip label={copied ? "Copied" : "Copy"} withArrow position="right">
+                  <ActionIcon color={copied ? "blue" : "gray"} onClick={copy} ml={4}>
+                    {copied ? <CheckIcon size={12} /> : <IconCopy size={12} />}
+                  </ActionIcon>
+                </Tooltip>
+              )}
+            </CopyButton>
           </div>
 
           {tokenContract && token ? (
@@ -779,4 +795,8 @@ export function Example() {
       )}
     </Stack>
   )
+}
+
+export function shortenAddress(address: string) {
+  return address.substring(0, 10) + "..." + address.substring(address.length - 10)
 }

@@ -384,7 +384,6 @@ async #getOrCreateConnection(): Promise<BridgeConnection> {
 					resolve(); // Already established
 				} else {
 					bridgeConnection.onSecureChannelEstablished(() => {
-						console.log("secure channel established (ECDH complete): ", bridgeConnection.topic);
 						resolve();
 					});
 				}
