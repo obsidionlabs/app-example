@@ -194,7 +194,6 @@ export function Example() {
   }, [token, account])
 
   const handleSendTx = async (isPrivate: boolean, withAuthWitness: boolean = false) => {
-    console.time("handleSendTx")
     setLoading(true)
     setError(null)
     setTxHash(null)

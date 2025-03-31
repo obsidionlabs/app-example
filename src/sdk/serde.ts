@@ -120,7 +120,6 @@ export async function encodeRegisterContracts({
   contracts: RegisterContract[];
   artifactStrategy: IArtifactStrategy;
 }) {
-  console.time("encodeRegisterContracts");
   const result = await Promise.all(
       contracts.map(async (x) => ({
         address: x.address.toString(),
@@ -131,7 +130,6 @@ export async function encodeRegisterContracts({
       })),
     );
 
-  console.timeEnd("encodeRegisterContracts");
   return result
   // return await Promise.all(
   //   contracts.map(async (x) => ({

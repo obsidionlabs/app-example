@@ -28,10 +28,7 @@ export class ShieldSwapArtifactStrategy implements IArtifactStrategy {
   );
 
   async serializeArtifact(artifact: ContractArtifact) {
-    console.time("serializeArtifact");
     const url = await this.#fetchOrUpload(artifact);
-    console.timeEnd("serializeArtifact");
-    console.log("serializeArtifact url: ", url);
     return {
       type: "url",
       url,
@@ -39,10 +36,7 @@ export class ShieldSwapArtifactStrategy implements IArtifactStrategy {
   }
 
   async #fetchOrUpload(artifact: ContractArtifact) {
-    console.time("fetchOrUpload");
-    console.time("getContractArtifactId");
     const id = await getContractArtifactId(artifact);
-    console.timeEnd("getContractArtifactId");
     let urlPromise = this.#cachedUrls.get(id);
     if (!urlPromise) {
       urlPromise = (async () => {
@@ -61,7 +55,6 @@ export class ShieldSwapArtifactStrategy implements IArtifactStrategy {
       })();
       this.#cachedUrls.set(id, urlPromise);
     }
-    console.timeEnd("fetchOrUpload");
     return urlPromise;
   }
 }

@@ -79,7 +79,6 @@ export class ObsidionBridgeConnector implements IConnector {
 	}
 
 	async #tryRestoreConnection() {
-		console.time("tryRestoreConnection");
 		try {
 			const stateString = get(this.#connectionStateStore);
 			if (!stateString) {
@@ -115,12 +114,11 @@ export class ObsidionBridgeConnector implements IConnector {
 			};
 			
 			// Attempt to reconnect using the stored values
-			console.time("connect")
 			const bridgeConnection = await this.#bridgeHost.connect({
 				topic: state.topic,
 				keyPair: keyPair
 			});
-			console.timeEnd("connect")
+		
 			
 			// Store the restored bridge connection
 			this.#bridgeConnection = {
@@ -138,9 +136,7 @@ export class ObsidionBridgeConnector implements IConnector {
 			// Clear invalid state to prevent future errors
 			this.#connectionStateStore.set(null);
 			return null;
-		} finally {
-			console.timeEnd("tryRestoreConnection");
-		}
+		} 
 	}
 
 	// Save the current connection state
@@ -159,7 +155,6 @@ export class ObsidionBridgeConnector implements IConnector {
 	}
 
 	async #createNewConnection() {
-		console.time("createNewConnection");
 		// Generate a new key pair
 		const keyPair = await generateECDHKeyPair();
 		
@@ -183,7 +178,6 @@ export class ObsidionBridgeConnector implements IConnector {
 			onSecureChannelEstablished: bridgeConnection.onSecureChannelEstablished,
 			isSecureChannelEstablished: bridgeConnection.isSecureChannelEstablished,
 		};
-		console.timeEnd("createNewConnection");
 		return this.#bridgeConnection;
 	}
 
@@ -208,7 +202,6 @@ async #getOrCreateConnection(): Promise<BridgeConnection> {
   
   // Create a promise for the connection attempt
   this.#connectionPromise = (async () => {
-		console.time("getOrCreateConnection");
     try {
       // First try to restore an existing connection
       const restoredConnection = await this.#tryRestoreConnection();
@@ -235,7 +228,6 @@ async #getOrCreateConnection(): Promise<BridgeConnection> {
     } finally {
       // Mark that the connection attempt is complete
       this.#connectionInProgress = false;
-			console.timeEnd("getOrCreateConnection");
     }
   })();
   
@@ -301,16 +293,13 @@ async #getOrCreateConnection(): Promise<BridgeConnection> {
 	provider: TypedEip1193Provider = {
 		request: async (request) => {
 
-      console.time("request");
 			const abortController = new AbortController();
 			console.log("request", request);
 
 			this.#pendingRequestsCount++;
 
 			const bridgeConnection = await this.#getOrCreateConnection();
-			console.log("bridge connection established");
-
-			console.timeEnd("request");
+			console.log("bridge connection established");;
 
 			const rpcRequest = {
 				id: crypto.randomUUID(),
@@ -435,12 +424,9 @@ async #getOrCreateConnection(): Promise<BridgeConnection> {
 
 			// Ensure the message router is set up
 			this.#setupMessageRouter();
-
-			console.time("waitForSecureChannel");
 			
 			// Wait for secure channel to be established
 			await this.waitForSecureChannel(bridgeConnection);
-			console.timeEnd("waitForSecureChannel");
 			console.log("secure channel established");
 
 			console.log(`Sending popup request:`, request);
@@ -478,9 +464,7 @@ async #getOrCreateConnection(): Promise<BridgeConnection> {
 		const requestId = `${bridgeConnection.topic}-${rpcRequest.id}`;
 		console.log("requestId", requestId);
 		try {
-			console.time("sendSecureMessage");
 			const ret = await bridgeConnection.sendSecureMessage("WALLET_RPC", rpcRequest);
-			console.timeEnd("sendSecureMessage");
 			console.log("response", ret);
 		} catch (error) {
 			console.error("Failed to send request:", error);
