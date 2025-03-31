@@ -2,10 +2,9 @@ import { persisted } from "svelte-persisted-store";
 import { derived, type Readable, type Writable, get } from "svelte/store";
 import type { IArtifactStrategy } from "./artifacts.js";
 import type { Eip6963ProviderInfo, IConnector } from "./base.js";
-import type { TypedEip1193Provider } from "./types.js";
+import type {  TypedEip1193Provider } from "./types.js";
 import { METHODS_NOT_REQUIRING_CONFIRMATION } from "./utils.js";
 import { BridgeHost, generateECDHKeyPair, type KeyPair } from "@obsidion/bridge";
-import type { RpcRequest } from "./types.js";
 
 type BridgeConnection = {
 	url: string;
@@ -15,6 +14,7 @@ type BridgeConnection = {
 	onSecureChannelEstablished: (callback: () => void) => void;
 	isSecureChannelEstablished: () => boolean;
 };
+
 
 // Define connection state structure for persistence
 type ConnectionState = {
@@ -79,6 +79,7 @@ export class ObsidionBridgeConnector implements IConnector {
 	}
 
 	async #tryRestoreConnection() {
+		console.time("tryRestoreConnection");
 		try {
 			const stateString = get(this.#connectionStateStore);
 			if (!stateString) {
@@ -113,17 +114,13 @@ export class ObsidionBridgeConnector implements IConnector {
 				publicKey: new Uint8Array(state.keyPair.publicKey)
 			};
 			
-			// Use a unique way to track this specific connection attempt
-			const connectionAttemptId = Date.now().toString();
-			console.log(`Starting connection attempt ${connectionAttemptId} for topic ${state.topic}`);
-			
 			// Attempt to reconnect using the stored values
+			console.time("connect")
 			const bridgeConnection = await this.#bridgeHost.connect({
 				topic: state.topic,
 				keyPair: keyPair
 			});
-			
-			console.log(`Connection attempt ${connectionAttemptId} succeeded`);
+			console.timeEnd("connect")
 			
 			// Store the restored bridge connection
 			this.#bridgeConnection = {
@@ -141,6 +138,8 @@ export class ObsidionBridgeConnector implements IConnector {
 			// Clear invalid state to prevent future errors
 			this.#connectionStateStore.set(null);
 			return null;
+		} finally {
+			console.timeEnd("tryRestoreConnection");
 		}
 	}
 
@@ -160,6 +159,7 @@ export class ObsidionBridgeConnector implements IConnector {
 	}
 
 	async #createNewConnection() {
+		console.time("createNewConnection");
 		// Generate a new key pair
 		const keyPair = await generateECDHKeyPair();
 		
@@ -183,7 +183,7 @@ export class ObsidionBridgeConnector implements IConnector {
 			onSecureChannelEstablished: bridgeConnection.onSecureChannelEstablished,
 			isSecureChannelEstablished: bridgeConnection.isSecureChannelEstablished,
 		};
-		
+		console.timeEnd("createNewConnection");
 		return this.#bridgeConnection;
 	}
 
@@ -208,6 +208,7 @@ async #getOrCreateConnection(): Promise<BridgeConnection> {
   
   // Create a promise for the connection attempt
   this.#connectionPromise = (async () => {
+		console.time("getOrCreateConnection");
     try {
       // First try to restore an existing connection
       const restoredConnection = await this.#tryRestoreConnection();
@@ -234,6 +235,7 @@ async #getOrCreateConnection(): Promise<BridgeConnection> {
     } finally {
       // Mark that the connection attempt is complete
       this.#connectionInProgress = false;
+			console.timeEnd("getOrCreateConnection");
     }
   })();
   
@@ -273,52 +275,156 @@ async #getOrCreateConnection(): Promise<BridgeConnection> {
 			const storedAddress = get(this.#connectedAccountAddress);
 			if (storedAddress) return storedAddress;
 		}
-		
-		// Otherwise do a fresh connect
-		return await this.connect();
 	}
 
-	// TODO: should send disconnect message to wallet through bridge
-	// or implement a proper handler in wallet when a new connection is being established
 	async disconnect() {
-		this.#bridgeHost.closeAll();
-		this.#bridgeConnection = null;
-		this.#connectedAccountAddress.set(null);
-		
-		// Clear the connection state when explicitly disconnecting
-		this.#connectionStateStore.set(null);
+		try {
+			 const bridgeConnection = await this.#getOrCreateConnection();
+						// Wait for secure channel to be established
+			 await this.waitForSecureChannel(bridgeConnection);
+
+		  const ret = await bridgeConnection.sendSecureMessage("DISCONNECT", undefined);
+		  console.log("disconnect returned", ret);
+
+			this.#bridgeConnection = null;
+			this.#connectedAccountAddress.set(null);
+			
+			// Clear the connection state when explicitly disconnecting
+			this.#connectionStateStore.set(null);
+			this.#bridgeHost.closeAll();
+
+		} catch (error) {
+			console.error("Failed to disconnect:", error);
+		}
 	}
 
 	provider: TypedEip1193Provider = {
 		request: async (request) => {
+
+      console.time("request");
 			const abortController = new AbortController();
 			console.log("request", request);
+
+			this.#pendingRequestsCount++;
+
+			const bridgeConnection = await this.#getOrCreateConnection();
+			console.log("bridge connection established");
+
+			console.timeEnd("request");
+
+			const rpcRequest = {
+				id: crypto.randomUUID(),
+				jsonrpc: "2.0",
+				method: request.method,
+				params: request.params || [],
+			};
 
 			if (METHODS_NOT_REQUIRING_CONFIRMATION.includes(request.method)) {
 				try {
 					console.log("sending request");
-					return await this.#sendRequest(request);
+					return await this.#sendRequest(bridgeConnection, rpcRequest);
 				} finally {
 					abortController.abort();
 				}
 			} else {
-				console.log("requesting popup");
-				return await this.#requestPopup(request);
+				console.log("sending popup request");
+				return await this.#sendRequestPopup(bridgeConnection, rpcRequest);
 			}
-		},
+	  }
 	};
 
-	async #requestPopup(request: RpcRequest<any>): Promise<any> {
+	private async waitForSecureChannel(bridgeConnection: BridgeConnection): Promise<void> {		
+		
+			// Wait for the secure channel to be established first
+			await Promise.race([
+				// Approach 1: Use event listener (typically faster)
+				new Promise<void>((resolve) => {
+					bridgeConnection.onSecureChannelEstablished(() => {
+						// Only add a minimal delay (10ms) for state propagation
+						setTimeout(resolve, 10)
+					})
+				}),
+	
+				// Approach 2: Use polling as backup with faster interval
+				new Promise<void>((resolve) => {
+					const channelCheckInterval = setInterval(() => {
+						if (bridgeConnection.isSecureChannelEstablished()) {
+							clearInterval(channelCheckInterval)
+							resolve()
+						}
+					}, 20) // Faster polling interval
+	
+					// Set a cleanup for the interval
+					setTimeout(() => clearInterval(channelCheckInterval), 5000)
+				}),
+			])
+		
+		
+		// Now wait for the "ready" message from the wallet
+		await new Promise<void>((resolve) => {
+			// Flag to track if we've received the ready message
+			let readyReceived = false;
+			
+			// Set up a message listener to watch for the "ppp_ready" message
+			const messageHandler = (message: any) => {
+				console.log("Received message while waiting for ready:", message);
+				
+				if (message && message.method === "ppp_ready") {
+					console.log("Received ready message from wallet");
+					readyReceived = true;
+					resolve();
+				}
+			};
+			
+			// Register the message listener
+			bridgeConnection.onMessageReceived(messageHandler);
+			
+			// Also set up a polling mechanism with timeout
+			const maxWaitTime = 10000; // 10 seconds maximum wait
+			const startTime = Date.now();
+			const readyCheckInterval = setInterval(() => {
+				// Check if we've waited too long
+				if (Date.now() - startTime > maxWaitTime) {
+					clearInterval(readyCheckInterval);
+					console.warn("Timed out waiting for ready message, proceeding anyway");
+					resolve();
+				}
+				
+				// Extra check for the ready flag
+				if (readyReceived) {
+					clearInterval(readyCheckInterval);
+				}
+			}, 100);
+			
+			// Try to send a ping message to prompt a ready response if needed
+			// This might be necessary if the wallet is already running but hasn't sent ready
+			setTimeout(async () => {
+				if (!readyReceived) {
+					console.log("Sending ping to prompt ready message");
+					try {
+						await bridgeConnection.sendSecureMessage("ping", {});
+					} catch (error) {
+						console.warn("Error sending ping:", error);
+					}
+				}
+			}, 1000);
+		});
+		
+		// Final verification
+		if (!bridgeConnection.isSecureChannelEstablished()) {
+			throw new Error("Secure channel could not be established");
+		}
+		
+		// Add a small delay to ensure everything is ready
+		await new Promise(resolve => setTimeout(resolve, 100));
+		console.log("Secure channel established and wallet ready");
+	}
+
+	async #sendRequestPopup(bridgeConnection: BridgeConnection, request: any): Promise<any> {
 		console.log("requestPopup...: ", request);
 		this.#pendingRequestsCount++;
 
 		try {
-			console.log("requesting popup");
-			// Use existing bridge connection or create a new one
-			const bridgeConnection = await this.#getOrCreateConnection();
-
-			console.log("bridge connection established");
-
 			const isRequestAccount = request.method === "aztec_requestAccounts";
 			// Open the popup with the bridge URL and topic in the query parameters
 			this.#openPopupWithBridgeUrl(bridgeConnection.url, isRequestAccount);
@@ -326,41 +432,20 @@ async #getOrCreateConnection(): Promise<BridgeConnection> {
 			if (!this.#popup) {
 				throw new Error("Failed to open popup. It may have been blocked by the browser.");
 			}
-					
-			console.log("popup ready");
-			console.log("bridge connection", bridgeConnection);
 
+			// Ensure the message router is set up
+			this.#setupMessageRouter();
+
+			console.time("waitForSecureChannel");
+			
 			// Wait for secure channel to be established
-			await new Promise<void>((resolve) => {
-				if (bridgeConnection.isSecureChannelEstablished()) {
-					resolve(); // Already established
-				} else {
-					bridgeConnection.onSecureChannelEstablished(() => {
-						console.log("secure channel established (ECDH complete)");
-						resolve();
-					});
-				}
-			});
+			await this.waitForSecureChannel(bridgeConnection);
+			console.timeEnd("waitForSecureChannel");
+			console.log("secure channel established");
 
-			console.log("secure channel established outer");
-
-			const rpcRequest = {
-				id: crypto.randomUUID(),
-				jsonrpc: "2.0",
-				method: request.method,
-				params: request.params || [],
-			};
-
-			// Now send the RPC request
-			console.log(`Sending popup request:`, rpcRequest);
-			await new Promise((resolve) => setTimeout(resolve, 3000)); // Small delay to ensure handler is registered
-			const ret = await bridgeConnection.sendSecureMessage("WALLET_RPC", rpcRequest);
-			console.log("sendSecureMessage returned", ret);
-			const requestId = `${bridgeConnection.topic}-${rpcRequest.id}`;
-			console.log("requestId", requestId);
-
+			console.log(`Sending popup request:`, request);
 			// Wait for the response promise to resolve and return its value
-			return await this.#createResponsePromise(request, requestId, bridgeConnection);
+			return await this.#createResponsePromise(request, bridgeConnection);
 		} finally {
 			this.#pendingRequestsCount--;
 		 this.#popup = null;
@@ -368,50 +453,43 @@ async #getOrCreateConnection(): Promise<BridgeConnection> {
 		}
 	}
 
-	async #sendRequest(request: RpcRequest<any>): Promise<any> {
+	async #sendRequest(bridgeConnection: BridgeConnection, request: any): Promise<any> {
 		console.log("#sendRequest...: ", request);
 		this.#pendingRequestsCount++;
 
 		try {
-			// Use existing bridge connection or create a new one
-			const bridgeConnection = await this.#getOrCreateConnection();
-			console.log("bridgeConnection", bridgeConnection);
-
+			// Ensure the message router is set up
+		  this.#setupMessageRouter();
 			// Wait for secure channel to be established if needed
-			await new Promise<void>((resolve) => {
-				if (bridgeConnection.isSecureChannelEstablished()) {
-					console.log("secure channel already established");
-					resolve(); // Already established
-				} else {
-					bridgeConnection.onSecureChannelEstablished(() => {
-						resolve();
-					});
-				}
-			 });
-
-			console.log("secure channel established outer");
-
-			const rpcRequest = {
-				id: crypto.randomUUID(),
-				jsonrpc: "2.0",
-				method: request.method,
-				params: request.params || [],
-			};
-
+			await this.waitForSecureChannel(bridgeConnection);
+			console.log("secure channel established");
 			// Send the actual request
 			console.log("sending secure message: ", request.method, request.params);
-			const requestId = `${bridgeConnection.topic}-${rpcRequest.id}`;
-			console.log("requestId", requestId);
 
 			// Send the request
 			await new Promise((resolve) => setTimeout(resolve, 1000)); // Small delay to ensure handler is registered
-			const ret = await bridgeConnection.sendSecureMessage("WALLET_RPC", rpcRequest);
-			console.log("response", ret);
-
-			return await this.#createResponsePromise(request, requestId, bridgeConnection);
+			return await this.#createResponsePromise(request, bridgeConnection);
 		} finally {
 			this.#pendingRequestsCount--;
 		}
+	}
+
+	async #createResponsePromise(rpcRequest:any, bridgeConnection: BridgeConnection): Promise<any> {
+		const requestId = `${bridgeConnection.topic}-${rpcRequest.id}`;
+		console.log("requestId", requestId);
+		try {
+			console.time("sendSecureMessage");
+			const ret = await bridgeConnection.sendSecureMessage("WALLET_RPC", rpcRequest);
+			console.timeEnd("sendSecureMessage");
+			console.log("response", ret);
+		} catch (error) {
+			console.error("Failed to send request:", error);
+		}
+  
+		return new Promise((resolve, reject) => {
+			// Register this request with the message router
+			this.#registerRequest(requestId, rpcRequest.method, resolve, reject);
+		});
 	}
 
 	#messageHandlerInitialized = false;
@@ -429,6 +507,7 @@ async #getOrCreateConnection(): Promise<BridgeConnection> {
 			timeout: any
 		}>();
 		
+		console.log("pendingRequests", pendingRequests);
 		// Track outgoing request IDs to filter out echoed messages
 		const outgoingRequestIds = new Set<string>();
 		
@@ -474,16 +553,9 @@ async #getOrCreateConnection(): Promise<BridgeConnection> {
 						
 						// Clear timeout
 						clearTimeout(timeout);
-						
-						// Extract the result
-						let result: any;
-						if (message.params && message.params.result) {
-							result = message.params.result;
-						} else if (message.result) {
-							result = message.result;
-						} else {
-							result = message.params || message;
-						}
+
+
+						const result = message.params.result
 
 						console.log("result", result);
 						
@@ -500,7 +572,7 @@ async #getOrCreateConnection(): Promise<BridgeConnection> {
 						pendingRequests.delete(requestId);
 						outgoingRequestIds.delete(requestId); // Clean up tracking
 						console.log(`ROUTER: Removed handler for ${requestId}, ${pendingRequests.size} pending requests remain`);
-					} else {
+					}	else {
 						console.log("ROUTER: No matching handler found for ID:", requestId);
 					}
 				} else if (message && message.method === "hello") {
@@ -535,16 +607,6 @@ async #getOrCreateConnection(): Promise<BridgeConnection> {
 			pendingRequests.set(id, { resolve, reject, method, timeout });
 			console.log(`ROUTER: Registered handler for ${method} with ID ${id}`);
 		};
-	}
-
-	async #createResponsePromise(request: RpcRequest<any>, requestId: string, bridgeConnection: BridgeConnection): Promise<any> {
-		// Ensure the message router is set up
-		this.#setupMessageRouter();
-  
-		return new Promise((resolve, reject) => {
-			// Register this request with the message router
-			this.#registerRequest(requestId, request.method, resolve, reject);
-		});
 	}
 
 	#openPopupWithBridgeUrl(connectionUrl: string, overrideConnection: boolean) {
@@ -596,12 +658,7 @@ async #getOrCreateConnection(): Promise<BridgeConnection> {
 				});
 		}
 	}
-
-
 }
-
-
-
 
 export interface ObsidionBridgeConnectorOptions {
 	/** EIP-6963 provider UUID */
@@ -624,31 +681,3 @@ export type FallbackOpenPopup = (
 
 const POPUP_WIDTH = 420;
 const POPUP_HEIGHT = 540;
-
-export type RpcResponse = ReturnType<typeof rpcResult> | ReturnType<typeof rpcError>
-
-export function rpcError(
-	request: {
-		id: unknown
-	},
-	error: { code: number; message: string },
-) {
-	return {
-		id: request.id,
-		jsonrpc: "2.0",
-		error,
-	}
-}
-
-export function rpcResult<T>(
-	request: {
-		id: unknown
-	},
-	result: T,
-) {
-	return {
-		id: request.id,
-		jsonrpc: "2.0",
-		result,
-	}
-}

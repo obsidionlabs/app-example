@@ -51,6 +51,7 @@ export class Eip1193Account {
 	sendTransaction(
 		txRequest: TransactionRequest | Promise<TransactionRequest>
 	): SentTx {
+    console.time("sendTransaction");
 		const txHashPromise = (async () => {
 			const txRequest_ = await txRequest;
 			return this.provider.request({
@@ -72,7 +73,7 @@ export class Eip1193Account {
 				],
 			});
 		})().then((x) => TxHash.fromString(x));
-
+    console.timeEnd("sendTransaction");
 		return new SentTx(this.aztecNode, txHashPromise);
 	}
 

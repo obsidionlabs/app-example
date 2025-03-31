@@ -70,6 +70,7 @@ export function Example() {
   const [withAuthWitness, setWithAuthWitness] = useState<boolean>(false)
   const [loading, setLoading] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
+  const [txHash, setTxHash] = useState<string | null>(null)
 
   useEffect(() => {
     const loadToken = async () => {
@@ -167,11 +168,11 @@ export function Example() {
     }
   }
 
-  useEffect(() => {
-    if (account && tokenContract && token) {
-      handleFetchBalances()
-    }
-  }, [account, tokenContract, token])
+  // useEffect(() => {
+  //   if (account && tokenContract && token) {
+  //     handleFetchBalances()
+  //   }
+  // }, [account, tokenContract, token])
 
   useEffect(() => {
     if (token && account) {
@@ -193,8 +194,11 @@ export function Example() {
   }, [token, account])
 
   const handleSendTx = async (isPrivate: boolean, withAuthWitness: boolean = false) => {
+    console.time("handleSendTx")
     setLoading(true)
     setError(null)
+    setTxHash(null)
+
     if (!account) {
       setError("Account not found")
       setLoading(false)
@@ -257,7 +261,7 @@ export function Example() {
       }
       console.log("authwitRequests: ", authwitRequests)
 
-      const txHash = await tokenContract.methods[
+      const tx = await tokenContract.methods[
         isPrivate ? "transfer_in_private" : "transfer_in_public"
       ](
         account.getAddress(),
@@ -268,8 +272,10 @@ export function Example() {
       )
         .send()
         .wait()
-      console.log("txHash: ", txHash)
+      console.log("tx: ", tx)
+      console.timeEnd("handleSendTx")
 
+      setTxHash(tx.txHash.toString())
       console.log("fetching balances after sending tx")
       handleFetchBalances()
     } catch (e) {
@@ -655,6 +661,25 @@ export function Example() {
                       }}
                     >
                       <Text size="sm">{error}</Text>
+                    </div>
+                  )}
+                  {txHash && (
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "center",
+                        gap: "2px",
+                        textAlign: "center",
+                        padding: "12px",
+                        marginTop: "16px",
+                      }}
+                    >
+                      <Text size="sm" color="dimmed">
+                        Transaction Hash:{" "}
+                      </Text>
+                      <Text size="sm" color="dimmed">
+                        {shortenAddress(txHash)}
+                      </Text>
                     </div>
                   )}
                 </div>

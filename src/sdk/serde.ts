@@ -120,15 +120,29 @@ export async function encodeRegisterContracts({
   contracts: RegisterContract[];
   artifactStrategy: IArtifactStrategy;
 }) {
-  return await Promise.all(
-    contracts.map(async (x) => ({
-      address: x.address.toString(),
-      instance: x.instance ? encodeContractInstance(x.instance) : undefined,
-      artifact: x.artifact
-        ? await artifactStrategy.serializeArtifact(x.artifact)
-        : undefined,
-    })),
-  );
+  console.time("encodeRegisterContracts");
+  const result = await Promise.all(
+      contracts.map(async (x) => ({
+        address: x.address.toString(),
+        instance: x.instance ? encodeContractInstance(x.instance) : undefined,
+        artifact: x.artifact
+          ? await artifactStrategy.serializeArtifact(x.artifact)
+          : undefined,
+      })),
+    );
+
+  console.timeEnd("encodeRegisterContracts");
+  return result
+  // return await Promise.all(
+  //   contracts.map(async (x) => ({
+  //     address: x.address.toString(),
+  //     instance: x.instance ? encodeContractInstance(x.instance) : undefined,
+  //     artifact: x.artifact
+  //       ? await artifactStrategy.serializeArtifact(x.artifact)
+  //       : undefined,
+  //   })),
+  // );
+
 }
 
 export async function decodeRegisterContracts(
