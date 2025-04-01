@@ -168,11 +168,11 @@ export function Example() {
     }
   }
 
-  // useEffect(() => {
-  //   if (account && tokenContract && token) {
-  //     handleFetchBalances()
-  //   }
-  // }, [account, tokenContract, token])
+  useEffect(() => {
+    if (account && tokenContract && token) {
+      handleFetchBalances()
+    }
+  }, [account, tokenContract, token])
 
   useEffect(() => {
     if (token && account) {
@@ -272,7 +272,6 @@ export function Example() {
         .send()
         .wait()
       console.log("tx: ", tx)
-      console.timeEnd("handleSendTx")
 
       setTxHash(tx.txHash.toString())
       console.log("fetching balances after sending tx")

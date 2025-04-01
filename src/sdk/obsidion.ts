@@ -273,7 +273,7 @@ async #getOrCreateConnection(): Promise<BridgeConnection> {
 		try {
 			 const bridgeConnection = await this.#getOrCreateConnection();
 						// Wait for secure channel to be established
-			 await this.waitForSecureChannel(bridgeConnection);
+			 await this.waitForSecureChannel(bridgeConnection, false);
 
 		  const ret = await bridgeConnection.sendSecureMessage("DISCONNECT", undefined);
 		  console.log("disconnect returned", ret);
@@ -322,7 +322,7 @@ async #getOrCreateConnection(): Promise<BridgeConnection> {
 	  }
 	};
 
-	private async waitForSecureChannel(bridgeConnection: BridgeConnection): Promise<void> {		
+	private async waitForSecureChannel(bridgeConnection: BridgeConnection, isPopup: boolean): Promise<void> {		
 		
 			// Wait for the secure channel to be established first
 			await Promise.race([
@@ -349,7 +349,9 @@ async #getOrCreateConnection(): Promise<BridgeConnection> {
 			])
 		
 		
+			if (!isPopup) return;
 		// Now wait for the "ready" message from the wallet
+
 		await new Promise<void>((resolve) => {
 			// Flag to track if we've received the ready message
 			let readyReceived = false;
@@ -426,7 +428,7 @@ async #getOrCreateConnection(): Promise<BridgeConnection> {
 			this.#setupMessageRouter();
 			
 			// Wait for secure channel to be established
-			await this.waitForSecureChannel(bridgeConnection);
+			await this.waitForSecureChannel(bridgeConnection, true);
 			console.log("secure channel established");
 
 			console.log(`Sending popup request:`, request);
@@ -447,7 +449,7 @@ async #getOrCreateConnection(): Promise<BridgeConnection> {
 			// Ensure the message router is set up
 		  this.#setupMessageRouter();
 			// Wait for secure channel to be established if needed
-			await this.waitForSecureChannel(bridgeConnection);
+			await this.waitForSecureChannel(bridgeConnection, false);
 			console.log("secure channel established");
 			// Send the actual request
 			console.log("sending secure message: ", request.method, request.params);
@@ -580,13 +582,13 @@ async #getOrCreateConnection(): Promise<BridgeConnection> {
 		// Expose the request registration method
 		this.#registerRequest = (id: string, method: string, resolve: any, reject: any) => {
 			const timeout = setTimeout(() => {
-				console.error(`Request "${method}" (${id}) timed out after 120 seconds`);
+				console.error(`Request "${method}" (${id}) timed out after 300 seconds`);
 				if (pendingRequests.has(id)) {
-					pendingRequests.get(id)!.reject(new Error(`Request "${method}" timed out after 120 seconds`));
+					pendingRequests.get(id)!.reject(new Error(`Request "${method}" timed out after 300 seconds`));
 					pendingRequests.delete(id);
 					outgoingRequestIds.delete(id); // Clean up tracking
 				}
-			}, 120000);
+			}, 300000);
 			
 			pendingRequests.set(id, { resolve, reject, method, timeout });
 			console.log(`ROUTER: Registered handler for ${method} with ID ${id}`);
