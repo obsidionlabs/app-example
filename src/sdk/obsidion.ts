@@ -5,6 +5,9 @@ import type { Eip6963ProviderInfo, IConnector } from "./base.js";
 import type {  TypedEip1193Provider } from "./types.js";
 import { METHODS_NOT_REQUIRING_CONFIRMATION } from "./utils.js";
 import { BridgeHost, generateECDHKeyPair, type KeyPair } from "@obsidion/bridge";
+// import debug from "debug"
+
+// debug.enable("bridge*")
 
 type BridgeConnection = {
 	url: string;
@@ -25,6 +28,8 @@ type ConnectionState = {
 	topic: string;
 	url: string;
 };
+
+
 
 export class ObsidionBridgeConnector implements IConnector {
 	readonly info: Eip6963ProviderInfo;
@@ -329,6 +334,7 @@ async #getOrCreateConnection(): Promise<BridgeConnection> {
 				// Approach 1: Use event listener (typically faster)
 				new Promise<void>((resolve) => {
 					bridgeConnection.onSecureChannelEstablished(() => {
+
 						// Only add a minimal delay (10ms) for state propagation
 						setTimeout(resolve, 10)
 					})
@@ -356,11 +362,11 @@ async #getOrCreateConnection(): Promise<BridgeConnection> {
 			// Flag to track if we've received the ready message
 			let readyReceived = false;
 			
-			// Set up a message listener to watch for the "ppp_ready" message
+			// Set up a message listener to watch for the "popup_ready" message
 			const messageHandler = (message: any) => {
 				console.log("Received message while waiting for ready:", message);
 				
-				if (message && message.method === "ppp_ready") {
+				if (message && message.method === "popup_ready") {
 					console.log("Received ready message from wallet");
 					readyReceived = true;
 					resolve();
