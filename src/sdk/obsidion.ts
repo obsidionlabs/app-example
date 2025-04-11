@@ -62,10 +62,10 @@ export class ObsidionBridgeConnector implements IConnector {
    */
   async #getOrCreateConnection(): Promise<BridgeInterface> {
     // If there's already a connection, return it immediately
-    if (this.#bridgeConnection) {
-      console.log("Using existing bridge connection")
-      return this.#bridgeConnection
-    }
+    // if (this.#bridgeConnection) {
+    //   console.log("Using existing bridge connection")
+    //   return this.#bridgeConnection
+    // }
 
     // If there's an in-flight connection creation, return that promise
     if (this.#connectionInitPromise) {
@@ -242,6 +242,7 @@ export class ObsidionBridgeConnector implements IConnector {
         console.log("secure channel established")
       } else {
         await this.waitForPopupReady(bridgeConnection)
+        //await new Promise((resolve) => setTimeout(resolve, 3000))
       }
 
       console.log(`Sending popup request:`, request)
@@ -290,7 +291,12 @@ export class ObsidionBridgeConnector implements IConnector {
   }
 
   private async waitForPopupReady(bridgeConnection: BridgeInterface): Promise<void> {
-    // Now wait for the "ready" message from the wallet
+    console.log("Waiting for popup ready message...")
+
+    // IMPORTANT: Don't set up the message router here, as it will be initialized elsewhere
+    // and doesn't handle popup_ready messages
+
+    // We need a way to detect popup_ready without disturbing the existing message handler
 
     await new Promise<void>((resolve) => {
       // Flag to track if we've received the ready message
@@ -309,24 +315,20 @@ export class ObsidionBridgeConnector implements IConnector {
 
       // Register the message listener
       bridgeConnection.onMessage(messageHandler)
-
       // Also set up a polling mechanism with timeout
       const maxWaitTime = 10000 // 10 seconds maximum wait
       const startTime = Date.now()
       const readyCheckInterval = setInterval(() => {
-        // Check if we've waited too long
         if (Date.now() - startTime > maxWaitTime) {
           clearInterval(readyCheckInterval)
           console.warn("Timed out waiting for ready message, proceeding anyway")
           resolve()
         }
-
-        // Extra check for the ready flag
-        if (readyReceived) {
-          clearInterval(readyCheckInterval)
-        }
       }, 100)
     })
+
+    // Restore original onMessage behavior
+    console.log("Done waiting for popup ready")
   }
 
   async #createResponsePromise(bridgeConnection: BridgeInterface, rpcRequest: any): Promise<any> {
