@@ -25,6 +25,8 @@ export class ObsidionBridgeConnector implements IConnector {
   #bridgeConnection: BridgeInterface | null = null
   #connectionLock = false
   #connectionInitPromise: Promise<BridgeInterface> | null = null
+  #messageHandlerInitialized = false
+  #registerRequest: (id: string, method: string, resolve: any, reject: any) => void = () => {}
 
   // Use persisted stores for connection state
   readonly #connectedAccountAddress: Writable<string | null>
@@ -46,27 +48,12 @@ export class ObsidionBridgeConnector implements IConnector {
     )
 
     this.accountObservable = derived(this.#connectedAccountAddress, (x) => x ?? undefined)
-
-    // ADDED: Check if we have a stored address - if not, clear connection state
-    // const storedAddress = get(this.#connectedAccountAddress)
-    // if (!storedAddress) {
-    //   console.log("No connected account found, clearing connection state")
-    //   this.#connectionStateStore.set(null)
-    // } else {
-    //   console.log("Found connected address:", storedAddress)
-    // }
   }
 
   /**
    * Get or create a bridge connection, with proper synchronization
    */
   async #getOrCreateConnection(): Promise<BridgeInterface> {
-    // If there's already a connection, return it immediately
-    // if (this.#bridgeConnection) {
-    //   console.log("Using existing bridge connection")
-    //   return this.#bridgeConnection
-    // }
-
     // If there's an in-flight connection creation, return that promise
     if (this.#connectionInitPromise) {
       console.log("Using in-flight connection creation promise")
@@ -154,9 +141,24 @@ export class ObsidionBridgeConnector implements IConnector {
       return undefined
     } catch (error) {
       console.error("Failed to connect:", error)
-      // this.#connectedAccountAddress.set(null)
-      // this.#connectionStateStore.set(null)
-      // this.#bridgeConnection = null
+
+      this.#popup = null
+      this.#pendingRequestsCount = 0
+      this.#messageHandlerInitialized = false
+      this.#registerRequest = () => {}
+
+      this.#connectionInitPromise = null
+      this.#connectedAccountAddress.set(null)
+      removeConnectionState("creator")
+
+      // Close and clear the bridge connection
+      try {
+        this.#bridgeConnection?.close()
+      } catch (error) {
+        console.error("Failed to close bridge connection:", error)
+      }
+      this.#bridgeConnection = null
+
       return undefined
     }
   }
@@ -171,18 +173,44 @@ export class ObsidionBridgeConnector implements IConnector {
   }
 
   async disconnect() {
+    if (!this.#bridgeConnection) return
     try {
-      this.#bridgeConnection?.close()
+      console.log("Disconnecting bridge connection")
 
-      const ret = await this.#bridgeConnection?.sendMessage("DISCONNECT", undefined)
+      // Send disconnect message to the wallet
+      const ret = await this.#bridgeConnection.sendMessage("DISCONNECT", undefined)
       console.log("disconnect returned", ret)
 
+      // Clear message handler initialization state
+      this.#messageHandlerInitialized = false
+
+      // Reset the request registration function to no-op
+      this.#registerRequest = () => {}
+
+      // Close the bridge connection
+      this.#bridgeConnection.close()
+
+      // Clear connection references
       this.#bridgeConnection = null
+      this.#connectionInitPromise = null
+
+      // Clear popup
+      this.#popup = null
+
+      // Clear account information
       this.#connectedAccountAddress.set(null)
 
+      // Remove persisted connection state
       removeConnectionState("creator")
+
+      console.log("Bridge connection fully disconnected")
     } catch (error) {
       console.error("Failed to disconnect:", error)
+    } finally {
+      // Ensure these are cleared even if there was an error
+      this.#bridgeConnection = null
+      this.#connectionInitPromise = null
+      this.#messageHandlerInitialized = false
     }
   }
 
@@ -242,7 +270,6 @@ export class ObsidionBridgeConnector implements IConnector {
         console.log("secure channel established")
       } else {
         await this.waitForPopupReady(bridgeConnection)
-        //await new Promise((resolve) => setTimeout(resolve, 3000))
       }
 
       console.log(`Sending popup request:`, request)
@@ -293,14 +320,8 @@ export class ObsidionBridgeConnector implements IConnector {
   private async waitForPopupReady(bridgeConnection: BridgeInterface): Promise<void> {
     console.log("Waiting for popup ready message...")
 
-    // IMPORTANT: Don't set up the message router here, as it will be initialized elsewhere
-    // and doesn't handle popup_ready messages
-
-    // We need a way to detect popup_ready without disturbing the existing message handler
-
     await new Promise<void>((resolve) => {
       // Flag to track if we've received the ready message
-      let readyReceived = false
 
       // Set up a message listener to watch for the "popup_ready" message
       const messageHandler = (message: any) => {
@@ -308,7 +329,6 @@ export class ObsidionBridgeConnector implements IConnector {
 
         if (message && message.method === "popup_ready") {
           console.log("Received ready message from wallet")
-          readyReceived = true
           resolve()
         }
       }
@@ -347,9 +367,6 @@ export class ObsidionBridgeConnector implements IConnector {
       this.#registerRequest(requestId, rpcRequest.method, resolve, reject)
     })
   }
-
-  #messageHandlerInitialized = false
-  #registerRequest: (id: string, method: string, resolve: any, reject: any) => void = () => {}
 
   #setupMessageRouter(bridgeConnection: BridgeInterface) {
     // Skip setup if already initialized

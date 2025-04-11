@@ -73,6 +73,7 @@ export function Example() {
 
   const [withAuthWitness, setWithAuthWitness] = useState<boolean>(false)
   const [loading, setLoading] = useState<boolean>(false)
+  const [loadingFetchBalances, setLoadingFetchBalances] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
   const [txHash, setTxHash] = useState<string | null>(null)
 
@@ -141,6 +142,9 @@ export function Example() {
   }
 
   const handleFetchBalances = async () => {
+    if (loadingFetchBalances) return
+    setLoadingFetchBalances(true)
+    setError(null)
     console.log("fetching balances...")
     console.log("account: ", account)
     console.log("tokenContract: ", tokenContract)
@@ -169,6 +173,8 @@ export function Example() {
     } catch (e) {
       setError("Error fetching balances")
       console.error("Error fetching balances: ", e)
+    } finally {
+      setLoadingFetchBalances(false)
     }
   }
 
@@ -569,7 +575,12 @@ export function Example() {
                       marginTop: "16px",
                     }}
                   >
-                    <Button size="sm" variant="light" onClick={() => handleFetchBalances()}>
+                    <Button
+                      size="sm"
+                      variant="light"
+                      disabled={loadingFetchBalances}
+                      onClick={() => handleFetchBalances()}
+                    >
                       Refresh Balances
                     </Button>
                     <Button size="sm" variant="light" onClick={() => handleAddToken()}>
