@@ -4,15 +4,8 @@ import type { IArtifactStrategy } from "./artifacts.js"
 import type { Eip6963ProviderInfo, IConnector } from "./base.js"
 import type { TypedEip1193Provider } from "./types.js"
 import { METHODS_NOT_REQUIRING_CONFIRMATION } from "./utils.js"
-import {
-  Bridge,
-  getConnectionState,
-  BridgeInterface,
-  isRefreshed,
-  saveRemotePublicKey,
-  removeConnectionState,
-} from "@obsidion/bridge"
-import { hexToBytes } from "@noble/ciphers/utils"
+import { Bridge, BridgeInterface, KeyPair, generateECDHKeyPair } from "@obsidion/bridge"
+import { bytesToHex, hexToBytes } from "@noble/ciphers/utils"
 import debug from "debug"
 
 debug.enable("bridge*")
@@ -164,12 +157,8 @@ export class ObsidionBridgeConnector implements IConnector {
   }
 
   async reconnect() {
-    // Try to use the persisted connection state
-    if (await this.#getOrCreateConnection()) {
-      // If we have a stored address, return it
-      const storedAddress = get(this.#connectedAccountAddress)
-      if (storedAddress) return storedAddress
-    }
+    console.error("Not implemented")
+    return undefined
   }
 
   async disconnect() {
@@ -178,8 +167,7 @@ export class ObsidionBridgeConnector implements IConnector {
       console.log("Disconnecting bridge connection")
 
       // Send disconnect message to the wallet
-      const ret = await this.#bridgeConnection.sendMessage("DISCONNECT", undefined)
-      console.log("disconnect returned", ret)
+      await this.#bridgeConnection.sendMessage("DISCONNECT", undefined)
 
       // Clear message handler initialization state
       this.#messageHandlerInitialized = false
@@ -266,7 +254,7 @@ export class ObsidionBridgeConnector implements IConnector {
       }
 
       if (isRequestAccount) {
-        await this.waitForSecureChannel(bridgeConnection, true)
+        await this.waitForSecureChannel(bridgeConnection)
         console.log("secure channel established")
       } else {
         await this.waitForPopupReady(bridgeConnection)
@@ -301,13 +289,9 @@ export class ObsidionBridgeConnector implements IConnector {
     }
   }
 
-  private async waitForSecureChannel(
-    bridgeConnection: BridgeInterface,
-    isPopup: boolean,
-  ): Promise<void> {
+  private async waitForSecureChannel(bridgeConnection: BridgeInterface): Promise<void> {
     console.log("waitForSecureChannel..")
     // Wait for the secure channel to be established first
-    // Approach 1: Use event listener (typically faster)
     await new Promise<void>((resolve) => {
       bridgeConnection.onSecureChannelEstablished(() => {
         saveRemotePublicKey(bridgeConnection.getRemotePublicKey(), "creator")
@@ -544,3 +528,77 @@ export type FallbackOpenPopup = (openPopup: () => Window | null) => Promise<Wind
 
 const POPUP_WIDTH = 420
 const POPUP_HEIGHT = 540
+
+const saveKeyPair = async (keyPair: KeyPair, role: "creator" | "joiner") => {
+  const parsedKeyPair = {
+    privateKey: bytesToHex(keyPair.privateKey),
+    publicKey: bytesToHex(keyPair.publicKey),
+  }
+
+  localStorage.setItem(`keyPair_${role}`, JSON.stringify(parsedKeyPair))
+}
+
+const getKeyPair = async (role: "creator" | "joiner") => {
+  const keyPair = localStorage.getItem(`keyPair_${role}`)
+  if (keyPair) {
+    const parsedKeyPair = JSON.parse(keyPair)
+    return {
+      privateKey: hexToBytes(parsedKeyPair.privateKey),
+      publicKey: hexToBytes(parsedKeyPair.publicKey),
+    }
+  }
+  const newKeyPair = await generateECDHKeyPair()
+  await saveKeyPair(newKeyPair, role)
+  return newKeyPair
+}
+
+const saveRemotePublicKey = async (publicKey: string, role: "creator" | "joiner") => {
+  localStorage.setItem(`remotePublicKey_${role}`, publicKey)
+}
+
+const getRemotePublicKeyFromLS = async (role: "creator" | "joiner") => {
+  const remotePublicKey = localStorage.getItem(`remotePublicKey_${role}`)
+  if (remotePublicKey) {
+    return hexToBytes(remotePublicKey)
+  }
+  return null
+}
+
+type ConnectionState = {
+  role: "creator" | "joiner"
+  keyPair: KeyPair
+  remotePublicKey: string | null
+  connected: boolean
+}
+
+const getConnectionState = async (role: "creator" | "joiner"): Promise<ConnectionState> => {
+  const keyPair = await getKeyPair(role)
+  const remotePublicKey = await getRemotePublicKeyFromLS(role)
+  if (remotePublicKey) {
+    return {
+      role,
+      keyPair,
+      remotePublicKey: bytesToHex(remotePublicKey),
+      connected: true,
+    }
+  }
+  return {
+    role,
+    keyPair,
+    remotePublicKey: null,
+    connected: false,
+  }
+}
+
+let refreshed = true
+const isRefreshed = () => {
+  const result = refreshed
+  console.log("isRefreshed", result)
+  refreshed = false
+  return result
+}
+
+const removeConnectionState = async (role: "creator" | "joiner") => {
+  localStorage.removeItem(`keyPair_${role}`)
+  localStorage.removeItem(`remotePublicKey_${role}`)
+}
