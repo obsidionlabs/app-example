@@ -76,7 +76,7 @@ export class ObsidionBridgeConnector implements IConnector {
 
       // Start a new connection creation process
       console.log("Creating new bridge connection")
-      const connectionState = await getConnectionState("creator")
+      const connectionState = await getConnectionState()
 
       // Create and store the promise before any async operations
       this.#connectionInitPromise = (async () => {
@@ -142,7 +142,7 @@ export class ObsidionBridgeConnector implements IConnector {
 
       this.#connectionInitPromise = null
       this.#connectedAccountAddress.set(null)
-      removeConnectionState("creator")
+      removeConnectionState()
 
       // Close and clear the bridge connection
       try {
@@ -189,7 +189,7 @@ export class ObsidionBridgeConnector implements IConnector {
       this.#connectedAccountAddress.set(null)
 
       // Remove persisted connection state
-      removeConnectionState("creator")
+      removeConnectionState()
 
       console.log("Bridge connection fully disconnected")
     } catch (error) {
@@ -266,7 +266,7 @@ export class ObsidionBridgeConnector implements IConnector {
     } catch (error) {
       console.error("Failed to send popup request:", error)
       if (isRequestAccount) {
-        removeConnectionState("creator")
+        removeConnectionState()
         this.#bridgeConnection?.close()
         this.#bridgeConnection = null
       }
@@ -294,7 +294,7 @@ export class ObsidionBridgeConnector implements IConnector {
     // Wait for the secure channel to be established first
     await new Promise<void>((resolve) => {
       bridgeConnection.onSecureChannelEstablished(() => {
-        saveRemotePublicKey(bridgeConnection.getRemotePublicKey(), "creator")
+        saveRemotePublicKey(bridgeConnection.getRemotePublicKey())
         // Only add a minimal delay (10ms) for state propagation
         setTimeout(resolve, 10)
       })
@@ -305,33 +305,41 @@ export class ObsidionBridgeConnector implements IConnector {
     console.log("Waiting for popup ready message...")
 
     await new Promise<void>((resolve) => {
-      // Flag to track if we've received the ready message
+      let isResolved = false
+      let readyCheckInterval: ReturnType<typeof setInterval> | null = null
 
-      // Set up a message listener to watch for the "popup_ready" message
       const messageHandler = (message: any) => {
+        if (isResolved) return // Ignore subsequent calls
         console.log("Received message while waiting for ready:", message)
 
         if (message && message.method === "popup_ready") {
           console.log("Received ready message from wallet")
+          if (readyCheckInterval) clearInterval(readyCheckInterval)
+          isResolved = true
+          resolve()
+        } else if (message && message.method === "rpc_response" && message.params?.result?.error) {
+          console.log("Received rpc_response error message from wallet")
+          if (readyCheckInterval) clearInterval(readyCheckInterval)
+          isResolved = true
           resolve()
         }
       }
 
       // Register the message listener
       bridgeConnection.onMessage(messageHandler)
-      // Also set up a polling mechanism with timeout
-      const maxWaitTime = 10000 // 10 seconds maximum wait
+
+      const maxWaitTime = 10000 // 10 seconds
       const startTime = Date.now()
-      const readyCheckInterval = setInterval(() => {
+      readyCheckInterval = setInterval(() => {
         if (Date.now() - startTime > maxWaitTime) {
-          clearInterval(readyCheckInterval)
+          clearInterval(readyCheckInterval!)
           console.warn("Timed out waiting for ready message, proceeding anyway")
+          isResolved = true
           resolve()
         }
       }, 100)
     })
 
-    // Restore original onMessage behavior
     console.log("Done waiting for popup ready")
   }
 
@@ -529,65 +537,10 @@ export type FallbackOpenPopup = (openPopup: () => Window | null) => Promise<Wind
 const POPUP_WIDTH = 420
 const POPUP_HEIGHT = 540
 
-const saveKeyPair = async (keyPair: KeyPair, role: "creator" | "joiner") => {
-  const parsedKeyPair = {
-    privateKey: bytesToHex(keyPair.privateKey),
-    publicKey: bytesToHex(keyPair.publicKey),
-  }
-
-  localStorage.setItem(`keyPair_${role}`, JSON.stringify(parsedKeyPair))
-}
-
-const getKeyPair = async (role: "creator" | "joiner") => {
-  const keyPair = localStorage.getItem(`keyPair_${role}`)
-  if (keyPair) {
-    const parsedKeyPair = JSON.parse(keyPair)
-    return {
-      privateKey: hexToBytes(parsedKeyPair.privateKey),
-      publicKey: hexToBytes(parsedKeyPair.publicKey),
-    }
-  }
-  const newKeyPair = await generateECDHKeyPair()
-  await saveKeyPair(newKeyPair, role)
-  return newKeyPair
-}
-
-const saveRemotePublicKey = async (publicKey: string, role: "creator" | "joiner") => {
-  localStorage.setItem(`remotePublicKey_${role}`, publicKey)
-}
-
-const getRemotePublicKeyFromLS = async (role: "creator" | "joiner") => {
-  const remotePublicKey = localStorage.getItem(`remotePublicKey_${role}`)
-  if (remotePublicKey) {
-    return hexToBytes(remotePublicKey)
-  }
-  return null
-}
-
 type ConnectionState = {
-  role: "creator" | "joiner"
   keyPair: KeyPair
   remotePublicKey: string | null
   connected: boolean
-}
-
-const getConnectionState = async (role: "creator" | "joiner"): Promise<ConnectionState> => {
-  const keyPair = await getKeyPair(role)
-  const remotePublicKey = await getRemotePublicKeyFromLS(role)
-  if (remotePublicKey) {
-    return {
-      role,
-      keyPair,
-      remotePublicKey: bytesToHex(remotePublicKey),
-      connected: true,
-    }
-  }
-  return {
-    role,
-    keyPair,
-    remotePublicKey: null,
-    connected: false,
-  }
 }
 
 let refreshed = true
@@ -598,7 +551,91 @@ const isRefreshed = () => {
   return result
 }
 
-const removeConnectionState = async (role: "creator" | "joiner") => {
-  localStorage.removeItem(`keyPair_${role}`)
-  localStorage.removeItem(`remotePublicKey_${role}`)
+// Replace the separate storage functions with consolidated versions
+const STORAGE_KEY = "aztec-wallet-connection-keys"
+
+const saveConnectionKeys = async (keyPair: KeyPair, remotePublicKey?: string | null) => {
+  // Get any existing data
+  const existingData = localStorage.getItem(STORAGE_KEY)
+  let storageObj: any = {}
+
+  if (existingData) {
+    try {
+      storageObj = JSON.parse(existingData)
+    } catch (e) {
+      console.error("Failed to parse existing connection keys", e)
+    }
+  }
+
+  // Update with new key pair
+  storageObj.keyPair = {
+    privateKey: bytesToHex(keyPair.privateKey),
+    publicKey: bytesToHex(keyPair.publicKey),
+  }
+
+  // Only update remote public key if provided
+  if (remotePublicKey !== undefined) {
+    storageObj.remotePublicKey = remotePublicKey
+  }
+
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(storageObj))
+}
+
+const saveRemotePublicKey = async (publicKey: string) => {
+  const connectionKeys = getConnectionKeys()
+  saveConnectionKeys(connectionKeys.keyPair, publicKey)
+}
+
+const getConnectionKeys = (): {
+  keyPair: KeyPair
+  remotePublicKey: string | null
+} => {
+  const storage = localStorage.getItem(STORAGE_KEY)
+
+  if (storage) {
+    try {
+      const parsed = JSON.parse(storage)
+
+      // Check if we have valid key pair data
+      if (parsed.keyPair?.privateKey && parsed.keyPair?.publicKey) {
+        return {
+          keyPair: {
+            privateKey: hexToBytes(parsed.keyPair.privateKey),
+            publicKey: hexToBytes(parsed.keyPair.publicKey),
+          },
+          remotePublicKey: parsed.remotePublicKey || null,
+        }
+      }
+    } catch (e) {
+      console.error("Failed to parse connection keys from storage", e)
+    }
+  }
+
+  // Return default values if storage is empty or invalid
+  return {
+    keyPair: { privateKey: new Uint8Array(), publicKey: new Uint8Array() },
+    remotePublicKey: null,
+  }
+}
+
+const getConnectionState = async (): Promise<ConnectionState> => {
+  const { keyPair, remotePublicKey } = getConnectionKeys()
+
+  // Initialize key pair if it's empty
+  const finalKeyPair = keyPair.privateKey.length === 0 ? await generateECDHKeyPair() : keyPair
+
+  // Save if we generated a new key pair
+  if (keyPair.privateKey.length === 0) {
+    saveConnectionKeys(finalKeyPair, remotePublicKey)
+  }
+
+  return {
+    keyPair: finalKeyPair,
+    remotePublicKey: remotePublicKey,
+    connected: remotePublicKey !== null,
+  }
+}
+
+const removeConnectionState = async () => {
+  localStorage.removeItem(STORAGE_KEY)
 }
