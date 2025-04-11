@@ -212,6 +212,11 @@ export class ObsidionBridgeConnector implements IConnector {
         return
       }
 
+      if (this.#pendingRequestsCount > 20) {
+        console.log("can't send request while pending requests count > 20")
+        return
+      }
+
       this.#pendingRequestsCount++
 
       const bridgeConnection = await this.#getOrCreateConnection()
@@ -265,11 +270,6 @@ export class ObsidionBridgeConnector implements IConnector {
       return await this.#createResponsePromise(bridgeConnection, request)
     } catch (error) {
       console.error("Failed to send popup request:", error)
-      if (isRequestAccount) {
-        removeConnectionState()
-        this.#bridgeConnection?.close()
-        this.#bridgeConnection = null
-      }
       throw error
     } finally {
       this.#pendingRequestsCount--
