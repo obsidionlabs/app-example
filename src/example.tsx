@@ -64,12 +64,8 @@ export function Example() {
   const [privateBalance, setPrivateBalance] = useState<string | null>(null)
   const [publicBalance, setPublicBalance] = useState<string | null>(null)
 
-  // const [amount, setAmount] = useState<string | null>(null)
-  // const [recipient, setRecipient] = useState<string | null>(null)
-  const [amount, setAmount] = useState<string | null>("0.1")
-  const [recipient, setRecipient] = useState<string | null>(
-    "0x197a1b7efb3b849c61902661128621d20fae38521da56bf990783a15e48d651b",
-  )
+  const [amount, setAmount] = useState<string | null>(null)
+  const [recipient, setRecipient] = useState<string | null>(null)
 
   const [withAuthWitness, setWithAuthWitness] = useState<boolean>(false)
   const [loading, setLoading] = useState<boolean>(false)
