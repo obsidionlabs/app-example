@@ -77,6 +77,7 @@ export class ObsidionBridgeConnector implements IConnector {
       // Start a new connection creation process
       console.log("Creating new bridge connection")
       const connectionState = await getConnectionState()
+      console.log("connectionState", connectionState)
 
       // Create and store the promise before any async operations
       this.#connectionInitPromise = (async () => {
@@ -84,18 +85,13 @@ export class ObsidionBridgeConnector implements IConnector {
           console.log("Starting Bridge.create()")
           const bridgeConnection = await Bridge.create({
             keyPair: connectionState.keyPair,
-            resume: connectionState.connected && isRefreshed(),
+            remotePublicKey: hexToBytes(connectionState.remotePublicKey!),
+            resume: connectionState.connected && isRefreshed()
           })
           console.log("Bridge connection created:", bridgeConnection)
 
           // Cache the result
           this.#bridgeConnection = bridgeConnection
-
-          if (connectionState.remotePublicKey) {
-            console.log("Setting remote public key:", connectionState.remotePublicKey)
-            bridgeConnection.setRemotePublicKey(hexToBytes(connectionState.remotePublicKey))
-            await bridgeConnection.computeSharedSecret()
-          }
 
           return bridgeConnection
         } catch (error) {
@@ -162,21 +158,23 @@ export class ObsidionBridgeConnector implements IConnector {
   }
 
   async disconnect() {
-    if (!this.#bridgeConnection) return
+
     try {
       console.log("Disconnecting bridge connection")
 
-      // Send disconnect message to the wallet
-      await this.#bridgeConnection.sendMessage("DISCONNECT", undefined)
+      if (this.#bridgeConnection) {
+        // Send disconnect message to the wallet
+        await this.#bridgeConnection.sendMessage("DISCONNECT", undefined)
+
+        // Close the bridge connection
+        this.#bridgeConnection.close()
+      }
 
       // Clear message handler initialization state
       this.#messageHandlerInitialized = false
 
       // Reset the request registration function to no-op
       this.#registerRequest = () => {}
-
-      // Close the bridge connection
-      this.#bridgeConnection.close()
 
       // Clear connection references
       this.#bridgeConnection = null
@@ -206,11 +204,6 @@ export class ObsidionBridgeConnector implements IConnector {
     request: async (request) => {
       const abortController = new AbortController()
       console.log("request", request)
-
-      if (this.#popup) {
-        console.log("can't send request while popup open")
-        return
-      }
 
       if (this.#pendingRequestsCount > 20) {
         console.log("can't send request while pending requests count > 20")
@@ -260,7 +253,6 @@ export class ObsidionBridgeConnector implements IConnector {
 
       if (isRequestAccount) {
         await this.waitForSecureChannel(bridgeConnection)
-        console.log("secure channel established")
       } else {
         await this.waitForPopupReady(bridgeConnection)
       }
@@ -282,7 +274,8 @@ export class ObsidionBridgeConnector implements IConnector {
 
     try {
       // Send the request
-      await new Promise((resolve) => setTimeout(resolve, 800)) // Small delay to ensure handler is registered
+      // await new Promise((resolve) => setTimeout(resolve, 800)) // Small delay to ensure handler is registered
+      await this.waitForSecureChannel(bridgeConnection)
       return await this.#createResponsePromise(bridgeConnection, request)
     } finally {
       this.#pendingRequestsCount--
@@ -294,6 +287,7 @@ export class ObsidionBridgeConnector implements IConnector {
     // Wait for the secure channel to be established first
     await new Promise<void>((resolve) => {
       bridgeConnection.onSecureChannelEstablished(() => {
+        console.log("secure channel established")
         saveRemotePublicKey(bridgeConnection.getRemotePublicKey())
         // Only add a minimal delay (10ms) for state propagation
         setTimeout(resolve, 10)

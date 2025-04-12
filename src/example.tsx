@@ -147,14 +147,17 @@ export function Example() {
 
     if (!account) {
       setError("Account not found")
+      setLoadingFetchBalances(false)
       return
     }
     if (!token || token.decimals === 0) {
       setError("Token contract not found")
+      setLoadingFetchBalances(false)
       return
     }
     if (!tokenContract) {
       setError("Token contract not found")
+      setLoadingFetchBalances(false)
       return
     }
     try {
