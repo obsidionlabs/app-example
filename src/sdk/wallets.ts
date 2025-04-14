@@ -1,13 +1,8 @@
 import { ShieldSwapArtifactStrategy } from "./artifacts.js";
 import type { AztecWalletSdk } from "./base.js";
-import { ObsidionBridgeConnector } from "./obsidion.js";
-import { type ReownPopupConnectorOptions } from "./reownPopup.js";
+import { ObsidionBridgeConnector, ObsidionBridgeConnectorOptions } from "./obsidion.js";
 
-type PartialReownPopupConnectorOptions = Pick<
-	ReownPopupConnectorOptions,
-| "metadata"
-> &
-	Partial<Pick<ReownPopupConnectorOptions, "walletUrl" | "artifactStrategy">>;
+type PartialReownPopupConnectorOptions = Partial<Pick<ObsidionBridgeConnectorOptions, "walletUrl" | "artifactStrategy">>;
 
 export function obsidion(params: PartialReownPopupConnectorOptions) {
 	return (sdk: AztecWalletSdk) =>
