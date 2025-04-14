@@ -4,8 +4,8 @@ import type { IArtifactStrategy } from "./artifacts.js"
 import type { Eip6963ProviderInfo, IConnector } from "./base.js"
 import type { TypedEip1193Provider } from "./types.js"
 import { METHODS_NOT_REQUIRING_CONFIRMATION } from "./utils.js"
-import { Bridge, BridgeInterface, KeyPair, generateECDHKeyPair } from "@obsidion/bridge"
-import { bytesToHex, hexToBytes } from "@noble/ciphers/utils"
+import { Bridge, BridgeInterface, KeyPair } from "@obsidion/bridge"
+import {  hexToBytes } from "@noble/ciphers/utils"
 import debug from "debug"
 
 debug.enable("bridge*")
@@ -63,7 +63,6 @@ export class ObsidionBridgeConnector implements IConnector {
     this.#connectionLock = true
 
     try {
-      // Double-check conditions after acquiring the lock
       if (this.#bridgeConnection) {
         console.log("Connection created while waiting for lock")
         return this.#bridgeConnection
@@ -76,19 +75,28 @@ export class ObsidionBridgeConnector implements IConnector {
 
       // Start a new connection creation process
       console.log("Creating new bridge connection")
-      const connectionState = await getConnectionState()
+      const connectionState = restoreBridgeSession()
       console.log("connectionState", connectionState)
 
       // Create and store the promise before any async operations
       this.#connectionInitPromise = (async () => {
+
+
         try {
+          const resume = !!connectionState
+          console.log("resume", resume)
+          
           console.log("Starting Bridge.create()")
           const bridgeConnection = await Bridge.create({
-            keyPair: connectionState.keyPair,
-            remotePublicKey: hexToBytes(connectionState.remotePublicKey!),
-            resume: connectionState.connected && isRefreshed()
+            keyPair: connectionState?.keyPair,
+            remotePublicKey: connectionState?.remotePublicKey,
+            resume
           })
           console.log("Bridge connection created:", bridgeConnection)
+
+          if (resume) {
+            await this.waitForSecureChannel(bridgeConnection)
+          }
 
           // Cache the result
           this.#bridgeConnection = bridgeConnection
@@ -138,7 +146,7 @@ export class ObsidionBridgeConnector implements IConnector {
 
       this.#connectionInitPromise = null
       this.#connectedAccountAddress.set(null)
-      removeConnectionState()
+      clearBridgeSession()
 
       // Close and clear the bridge connection
       try {
@@ -162,13 +170,7 @@ export class ObsidionBridgeConnector implements IConnector {
     try {
       console.log("Disconnecting bridge connection")
 
-      if (this.#bridgeConnection) {
-        // Send disconnect message to the wallet
-        await this.#bridgeConnection.sendMessage("DISCONNECT", undefined)
-
-        // Close the bridge connection
-        this.#bridgeConnection.close()
-      }
+      await this.closeBridge(this.#bridgeConnection ?? await this.#getOrCreateConnection())
 
       // Clear message handler initialization state
       this.#messageHandlerInitialized = false
@@ -177,7 +179,6 @@ export class ObsidionBridgeConnector implements IConnector {
       this.#registerRequest = () => {}
 
       // Clear connection references
-      this.#bridgeConnection = null
       this.#connectionInitPromise = null
 
       // Clear popup
@@ -185,9 +186,6 @@ export class ObsidionBridgeConnector implements IConnector {
 
       // Clear account information
       this.#connectedAccountAddress.set(null)
-
-      // Remove persisted connection state
-      removeConnectionState()
 
       console.log("Bridge connection fully disconnected")
     } catch (error) {
@@ -197,6 +195,22 @@ export class ObsidionBridgeConnector implements IConnector {
       this.#bridgeConnection = null
       this.#connectionInitPromise = null
       this.#messageHandlerInitialized = false
+    }
+  }
+
+  // TODO: what if this DISCONNECT message is sent but not received?
+  // This happens when the wallet's main tab is not open when this method is called. 
+  private async closeBridge(bridgeConnection: BridgeInterface) {
+    try {
+      // Send DISCONNECT message to the wallet
+      await bridgeConnection.sendMessage("DISCONNECT", undefined)
+      bridgeConnection.close()
+    
+      // Remove persisted connection state
+      clearBridgeSession()
+      this.#bridgeConnection = null
+    } catch (error) {
+      console.error("Failed to close bridge connection:", error)
     }
   }
 
@@ -251,7 +265,7 @@ export class ObsidionBridgeConnector implements IConnector {
         throw new Error("Failed to open popup. It may have been blocked by the browser.")
       }
 
-      if (isRequestAccount) {
+      if (isRequestAccount && !bridgeConnection.isSecureChannelEstablished()) {
         await this.waitForSecureChannel(bridgeConnection)
       } else {
         await this.waitForPopupReady(bridgeConnection)
@@ -274,8 +288,6 @@ export class ObsidionBridgeConnector implements IConnector {
 
     try {
       // Send the request
-      // await new Promise((resolve) => setTimeout(resolve, 800)) // Small delay to ensure handler is registered
-      await this.waitForSecureChannel(bridgeConnection)
       return await this.#createResponsePromise(bridgeConnection, request)
     } finally {
       this.#pendingRequestsCount--
@@ -288,7 +300,8 @@ export class ObsidionBridgeConnector implements IConnector {
     await new Promise<void>((resolve) => {
       bridgeConnection.onSecureChannelEstablished(() => {
         console.log("secure channel established")
-        saveRemotePublicKey(bridgeConnection.getRemotePublicKey())
+        // saveRemotePublicKey(bridgeConnection.getRemotePublicKey())
+        saveBridgeSession(bridgeConnection.getKeyPair(), hexToBytes(bridgeConnection.getRemotePublicKey()))
         // Only add a minimal delay (10ms) for state propagation
         setTimeout(resolve, 10)
       })
@@ -320,7 +333,7 @@ export class ObsidionBridgeConnector implements IConnector {
       }
 
       // Register the message listener
-      bridgeConnection.onMessage(messageHandler)
+      bridgeConnection.onSecureMessage(messageHandler)
 
       const maxWaitTime = 10000 // 10 seconds
       const startTime = Date.now()
@@ -451,7 +464,7 @@ export class ObsidionBridgeConnector implements IConnector {
 
     // Set the message handler on the bridge connection
     if (bridgeConnection) {
-      bridgeConnection.onMessage(messageHandler)
+      bridgeConnection.onSecureMessage(messageHandler)
       this.#messageHandlerInitialized = true
       console.log("ROUTER: Message router initialized")
     }
@@ -531,105 +544,61 @@ export type FallbackOpenPopup = (openPopup: () => Window | null) => Promise<Wind
 const POPUP_WIDTH = 420
 const POPUP_HEIGHT = 540
 
-type ConnectionState = {
-  keyPair: KeyPair
-  remotePublicKey: string | null
-  connected: boolean
-}
 
-let refreshed = true
-const isRefreshed = () => {
-  const result = refreshed
-  console.log("isRefreshed", result)
-  refreshed = false
-  return result
-}
+// Session storage key for bridge session data
+const BRIDGE_SESSION_STORAGE_KEY = "obsidion-bridge-session"
 
-// Replace the separate storage functions with consolidated versions
-const STORAGE_KEY = "aztec-wallet-connection-keys"
-
-const saveConnectionKeys = async (keyPair: KeyPair, remotePublicKey?: string | null) => {
-  // Get any existing data
-  const existingData = localStorage.getItem(STORAGE_KEY)
-  let storageObj: any = {}
-
-  if (existingData) {
-    try {
-      storageObj = JSON.parse(existingData)
-    } catch (e) {
-      console.error("Failed to parse existing connection keys", e)
-    }
+/**
+ * Save bridge session to session storage
+ */
+export function saveBridgeSession(keyPair: KeyPair, remotePublicKey?: Uint8Array): void {
+  try {
+    sessionStorage.setItem(
+      BRIDGE_SESSION_STORAGE_KEY,
+      JSON.stringify({
+        publicKey: Array.from(keyPair.publicKey),
+        privateKey: Array.from(keyPair.privateKey),
+        ...(remotePublicKey ? { remotePublicKey: Array.from(remotePublicKey) } : {}),
+      }),
+    )
+    console.log("Saved bridge session to session storage")
+  } catch (error) {
+    console.error("Failed to save bridge session to session storage:", error)
   }
-
-  // Update with new key pair
-  storageObj.keyPair = {
-    privateKey: bytesToHex(keyPair.privateKey),
-    publicKey: bytesToHex(keyPair.publicKey),
-  }
-
-  // Only update remote public key if provided
-  if (remotePublicKey !== undefined) {
-    storageObj.remotePublicKey = remotePublicKey
-  }
-
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(storageObj))
 }
 
-const saveRemotePublicKey = async (publicKey: string) => {
-  const connectionKeys = getConnectionKeys()
-  saveConnectionKeys(connectionKeys.keyPair, publicKey)
-}
-
-const getConnectionKeys = (): {
-  keyPair: KeyPair
-  remotePublicKey: string | null
-} => {
-  const storage = localStorage.getItem(STORAGE_KEY)
-
-  if (storage) {
-    try {
-      const parsed = JSON.parse(storage)
-
-      // Check if we have valid key pair data
-      if (parsed.keyPair?.privateKey && parsed.keyPair?.publicKey) {
-        return {
-          keyPair: {
-            privateKey: hexToBytes(parsed.keyPair.privateKey),
-            publicKey: hexToBytes(parsed.keyPair.publicKey),
-          },
-          remotePublicKey: parsed.remotePublicKey || null,
-        }
+/**
+ * Restore bridge session from session storage
+ */
+export function restoreBridgeSession():
+  | { keyPair: KeyPair; remotePublicKey?: Uint8Array }
+  | undefined {
+  try {
+    const keyPairJson = sessionStorage.getItem(BRIDGE_SESSION_STORAGE_KEY)
+    if (keyPairJson) {
+      const parsedSavedKeyPair = JSON.parse(keyPairJson)
+      const keyPair = {
+        publicKey: new Uint8Array(parsedSavedKeyPair.publicKey),
+        privateKey: new Uint8Array(parsedSavedKeyPair.privateKey),
       }
-    } catch (e) {
-      console.error("Failed to parse connection keys from storage", e)
+      console.log("Found existing bridge session in session storage")
+      return {
+        keyPair,
+        ...(parsedSavedKeyPair.remotePublicKey
+          ? { remotePublicKey: new Uint8Array(parsedSavedKeyPair.remotePublicKey) }
+          : {}),
+      }
     }
+  } catch (error) {
+    console.error("Failed to retrieve bridge session from session storage:", error)
   }
-
-  // Return default values if storage is empty or invalid
-  return {
-    keyPair: { privateKey: new Uint8Array(), publicKey: new Uint8Array() },
-    remotePublicKey: null,
-  }
+  return
 }
 
-const getConnectionState = async (): Promise<ConnectionState> => {
-  const { keyPair, remotePublicKey } = getConnectionKeys()
-
-  // Initialize key pair if it's empty
-  const finalKeyPair = keyPair.privateKey.length === 0 ? await generateECDHKeyPair() : keyPair
-
-  // Save if we generated a new key pair
-  if (keyPair.privateKey.length === 0) {
-    saveConnectionKeys(finalKeyPair, remotePublicKey)
-  }
-
-  return {
-    keyPair: finalKeyPair,
-    remotePublicKey: remotePublicKey,
-    connected: remotePublicKey !== null,
-  }
-}
-
-const removeConnectionState = async () => {
-  localStorage.removeItem(STORAGE_KEY)
+/**
+ * Clear bridge session from session storage
+ */
+export function clearBridgeSession(): void {
+  sessionStorage.removeItem(BRIDGE_SESSION_STORAGE_KEY)
+  console.log("Cleared bridge session from session storage")
 }

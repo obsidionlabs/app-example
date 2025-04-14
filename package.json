@@ -20,7 +20,7 @@
     "@mantine/notifications": "^7.17.2",
     "@noble/ciphers": "^1.2.1",
     "@noble/secp256k1": "^2.2.3",
-    "@obsidion/bridge": "0.2.0",
+    "@obsidion/bridge": "0.4.1",
     "@tabler/icons-react": "^3.31.0",
     "@types/lodash-es": "^4.17.12",
     "@types/react": "^18.3.20",

@@ -177,11 +177,11 @@ export function Example() {
     }
   }
 
-  useEffect(() => {
-    if (account && tokenContract && token) {
-      handleFetchBalances()
-    }
-  }, [account, tokenContract, token])
+  // useEffect(() => {
+  //   if (account && tokenContract && token) {
+  //     handleFetchBalances()
+  //   }
+  // }, [account, tokenContract, token])
 
   useEffect(() => {
     if (token && account) {
