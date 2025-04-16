@@ -21,7 +21,7 @@ import { AztecWalletSdk, obsidion } from "@nemi-fi/wallet-sdk"
 import { Contract } from "@nemi-fi/wallet-sdk/eip1193"
 import { TokenContract, TokenContractArtifact } from "@aztec/noir-contracts.js/Token"
 
-const NODE_URL = "http://localhost:8080" // or "http://104.198.9.16:8080" ( devnet )
+const NODE_URL = "http://localhost:8080" // or "http://34.169.170.55:8080" ( devnet )
 const pxe = createPXEClient(NODE_URL)
 
 const WALLET_URL = "https://app.obsidion.xyz"

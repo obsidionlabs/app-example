@@ -27,7 +27,7 @@ import { formatUnits, parseUnits } from "viem"
 
 class Token extends Contract.fromAztec(TokenContract) {}
 
-const NODE_URL = "http://localhost:8080" // or "http://104.198.9.16:8080"
+const NODE_URL = "http://localhost:8080" // or "http://34.169.170.55:8080"
 const WALLET_URL = "http://localhost:5173" // or "https://app.obsidion.xyz"
 
 const sdk = new AztecWalletSdk({
