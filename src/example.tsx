@@ -14,14 +14,14 @@ import {
 import { IconCopy } from "@tabler/icons-react"
 import {
   AztecAddress,
-  ContractArtifact,
-  ContractInstanceWithAddress,
+  type ContractArtifact,
+  type ContractInstanceWithAddress,
   readFieldCompressedString,
 } from "@aztec/aztec.js"
 import { TokenContract, TokenContractArtifact } from "@aztec/noir-contracts.js/Token"
-import { BatchCall, Contract, IntentAction } from "@shieldswap/wallet-sdk/eip1193"
-import { useAccount } from "@shieldswap/wallet-sdk/react"
-import { AztecWalletSdk, obsidion } from "@shieldswap/wallet-sdk"
+import { BatchCall, Contract, type IntentAction } from "@nemi-fi/wallet-sdk/eip1193"
+import { useAccount } from "@nemi-fi/wallet-sdk/react"
+import { AztecWalletSdk, obsidion } from "@nemi-fi/wallet-sdk"
 
 import { formatUnits, parseUnits } from "viem"
 
@@ -321,15 +321,7 @@ export function Example() {
         .mint_to_public(account.address, 1000e18)
         .request()
 
-      const batchedTx = new BatchCall(account, [mintPrivateTx, mintPublicTx], {
-        // registerContracts: [
-        //   {
-        //     address: tokenContract.address,
-        //     instance: tokenContract.instance,
-        //     artifact: TokenContractArtifact,
-        //   },
-        // ],
-      })
+      const batchedTx = new BatchCall(account, [mintPrivateTx, mintPublicTx])
       const batchedTxHash = await batchedTx.send().wait()
       console.log("batchedTxHash: ", batchedTxHash)
 

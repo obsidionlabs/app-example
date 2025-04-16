@@ -4,32 +4,31 @@
 
 - Obsidion app: https://app.obsidion.xyz/
 - Our hosted PXE url: https://pxe.obsidion.xyz/
-- aztec-package/sandbox version: _0.82.0_
-- wallet sdk: https://www.npmjs.com/package/@shieldswap/wallet-sdk
-  - \*use 0.82.0-next.12 version of this sdk.
+- aztec-package/sandbox version: _0.85.0_
+- wallet sdk: https://www.npmjs.com/package/@nemi-fi/wallet-sdk
+  - \*use 0.85.0-obsidion.1 version of this sdk.
 
 ### 1. install obsidion wallet sdk
 
 ```shell
-pnpm i @shieldswap/wallet-sdk@0.82.0-next.12
+pnpm i @nemi-fi/wallet-sdk@0.85.0-obsidion.1
 ```
 
 ### 2. how to use sdk
 
 ```tsx
-import { AztecWalletSdk, obsidion } from "@shieldswap/wallet-sdk"
-import { Contract } from "@shieldswap/wallet-sdk/eip1193"
+import { AztecWalletSdk, obsidion } from "@nemi-fi/wallet-sdk"
+import { Contract } from "@nemi-fi/wallet-sdk/eip1193"
 import { TokenContract, TokenContractArtifact } from "@aztec/noir-contracts.js/Token"
 
 const NODE_URL = "http://localhost:8080" // or "http://104.198.9.16:8080" ( devnet )
 const pxe = createPXEClient(NODE_URL)
 
-// reown ( formerly wallet connect ) project id
-const PROJECT_ID = "067a11239d95dd939ee98ea22bde21da"
+const WALLET_URL = "https://app.obsidion.xyz"
 
 const sdk = new AztecWalletSdk({
   aztecNode: NODE_URL,
-  connectors: [obsidion({ projectId: PROJECT_ID })],
+  connectors: [obsidion({ walletUrl: WALLET_URL })],
 })
 
 // example method that does...
