@@ -4,7 +4,7 @@
 
 - Obsidion app: https://app.obsidion.xyz/
 - Our hosted PXE url: https://pxe.obsidion.xyz/
-- aztec-package/sandbox version: _0.85.0_
+- aztec-package/sandbox version: _0.85.0-alpha-testnet.0_
 - wallet sdk: https://www.npmjs.com/package/@nemi-fi/wallet-sdk
   - \*use 0.85.0-obsidion.1 version of this sdk.
 
@@ -22,9 +22,6 @@ import { Contract } from "@nemi-fi/wallet-sdk/eip1193"
 import { TokenContract, TokenContractArtifact } from "@aztec/noir-contracts.js/Token"
 
 const NODE_URL = "http://localhost:8080" // or "http://34.169.170.55:8080" ( devnet )
-const pxe = createPXEClient(NODE_URL)
-
-const WALLET_URL = "https://app.obsidion.xyz"
 
 const sdk = new AztecWalletSdk({
   aztecNode: NODE_URL,
@@ -58,11 +55,28 @@ For more details, see the [src/example.tsx](./src/example.tsx)
 
 ## Configuration & Tools
 
-### Change Sandbox URL & L1 RPC URL
+### Networks
 
-it's recommended to develop with your own local sandbox if you can as devnet with our hosted pxe at
-`https://pxe.obsidion.xyz` is still slower and unstable. you can switch network to sandbox in
-Settings > Networks in the Obsidion Wallet UI.
+Obsiidon App offeres two default networks below
+
+#### Sandbox
+
+- Browser PXE
+- Proving Disabled
+- Node URL: http://localhost:8080
+- L1 RPC URL: http://localhost:8545
+
+#### Devnet
+
+- Browser PXE
+- Proving Enabled
+- Node URL: https://pxe.obsidion.xyz (http://34.169.170.55:8080 )
+- L1 RPC URL: http://34.169.72.63:8545
+
+### Custom Networks
+
+You can add custom networks to the Obsidion App. To do so, go to network settings, click on the
+`Add Network` button and provide URLSs. \*Docker PXE is not supported.
 
 ## Advanced Mode
 
@@ -102,26 +116,6 @@ view notes specific to each account.
 
 ## Troubleshooting
 
-### Wallet Connect Issues
-
-example:
-
-```shell
-{context: 'client'}  Error: No matching key. history: 1740320789580213
-```
-
-If you encounter any error with wallet connect, pleasetry the following:
-
-1. disconnect() with `sdk.disconnect()`
-2. delete all the cache under indexedDB -> WALLET_CONNECT_V2_INDEXED_DB in local storage in your app
-   site.
-3. clear wallet connect cache for wallet site too.
-
-### simulate() with `aztec_call` not working
-
-If simulate() with `aztec_call` not working, and it's not resolved even after clearing wallet
-connect cache, one of the followings might be the cause.
-
 #### 1. Wallet Tab Closed
 
 If wallet tab, e.g. app.obsidion.xyz, is closed, simulation rpc call gets drop. Make sure you keep
@@ -146,5 +140,6 @@ for more help and feedback.
 ## Run example app
 
 ```shell
+pnpm i
 pnpm dev
 ```

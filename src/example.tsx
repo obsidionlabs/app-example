@@ -22,12 +22,12 @@ import { TokenContract, TokenContractArtifact } from "@aztec/noir-contracts.js/T
 import { BatchCall, Contract, type IntentAction } from "@nemi-fi/wallet-sdk/eip1193"
 import { useAccount } from "@nemi-fi/wallet-sdk/react"
 import { AztecWalletSdk, obsidion } from "@nemi-fi/wallet-sdk"
-
 import { formatUnits, parseUnits } from "viem"
 
 class Token extends Contract.fromAztec(TokenContract) {}
 
-const NODE_URL = "http://localhost:8080" // or "http://34.169.170.55:8080"
+//const NODE_URL = "http://localhost:8080" // or "http://34.169.170.55:8080"
+const NODE_URL = "https://registry.obsidion.xyz/node"
 const WALLET_URL = "http://localhost:5173" // or "https://app.obsidion.xyz"
 
 const sdk = new AztecWalletSdk({
