@@ -4,14 +4,15 @@
 
 - Obsidion app: https://app.obsidion.xyz/
 - Our hosted PXE url: https://pxe.obsidion.xyz/
+- Our Node url: https://registry.obsidion.xyz/node
 - aztec-package/sandbox version: _0.85.0-alpha-testnet.0_
 - wallet sdk: https://www.npmjs.com/package/@nemi-fi/wallet-sdk
-  - \*use 0.85.0-obsidion.1 version of this sdk.
+  - \*use 0.85.0-obsidion.2 version of this sdk.
 
 ### 1. install obsidion wallet sdk
 
 ```shell
-pnpm i @nemi-fi/wallet-sdk@0.85.0-obsidion.1
+pnpm i @nemi-fi/wallet-sdk@0.85.0-obsidion.2
 ```
 
 ### 2. how to use sdk
@@ -21,7 +22,8 @@ import { AztecWalletSdk, obsidion } from "@nemi-fi/wallet-sdk"
 import { Contract } from "@nemi-fi/wallet-sdk/eip1193"
 import { TokenContract, TokenContractArtifact } from "@aztec/noir-contracts.js/Token"
 
-const NODE_URL = "http://localhost:8080" // or "http://34.169.170.55:8080" ( devnet )
+const NODE_URL = "http://localhost:8080"
+// devnet: "http://34.169.170.55:8080" or "https://registry.obsidion.xyz/node"
 
 const sdk = new AztecWalletSdk({
   aztecNode: NODE_URL,
@@ -63,6 +65,7 @@ Obsiidon App offeres two default networks below
 
 - Browser PXE
 - Proving Disabled
+  - You can enable proving by setting `prover_enabled` to `true` in local storage.
 - Node URL: http://localhost:8080
 - L1 RPC URL: http://localhost:8545
 
@@ -70,7 +73,8 @@ Obsiidon App offeres two default networks below
 
 - Browser PXE
 - Proving Enabled
-- Node URL: https://pxe.obsidion.xyz (http://34.169.170.55:8080 )
+  - You can disable proving by setting `prover_enabled` to `false` in local storage.
+- Node URL: https://registry.obsidion.xyz/node (http://34.169.170.55:8080 )
 - L1 RPC URL: http://34.169.72.63:8545
 
 ### Custom Networks
