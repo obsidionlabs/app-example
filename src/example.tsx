@@ -26,12 +26,12 @@ import { formatUnits, parseUnits } from "viem"
 
 class Token extends Contract.fromAztec(TokenContract) {}
 
-const SANDBOX_NODE_URL = "http://localhost:8080" // or "http://34.169.170.55:8080"
-const DEVNET_NODE_URL = "https://registry.obsidion.xyz/node"
+const NODE_URL = "http://localhost:8080" // or "http://34.169.170.55:8080"
+// const NODE_URL = "https://registry.obsidion.xyz/node"
 const WALLET_URL = "http://localhost:5173" // or "https://app.obsidion.xyz"
 
 const sdk = new AztecWalletSdk({
-  aztecNode: SANDBOX_NODE_URL,
+  aztecNode: NODE_URL,
   connectors: [obsidion({ walletUrl: WALLET_URL })],
 })
 
