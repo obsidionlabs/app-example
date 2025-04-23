@@ -18,7 +18,8 @@
     "resolveJsonModule": true,
     "composite": true,
     "skipLibCheck": true,
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    "verbatimModuleSyntax": true
   },
   "include": ["src", "src/**/*.json"],
   "exclude": ["node_modules", "trash"]

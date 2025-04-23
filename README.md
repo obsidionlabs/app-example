@@ -4,32 +4,32 @@
 
 - Obsidion app: https://app.obsidion.xyz/
 - Our hosted PXE url: https://pxe.obsidion.xyz/
-- aztec-package/sandbox version: _0.76.1_
-- wallet sdk: https://www.npmjs.com/package/@shieldswap/wallet-sdk
-  - \*use 0.76.1-next.12 version of this sdk.
+- Our Node url: https://registry.obsidion.xyz/node
+- aztec-package/sandbox version: _0.85.0-alpha-testnet.2_
+- wallet sdk: https://www.npmjs.com/package/@nemi-fi/wallet-sdk
+  - \*use 0.85.0-obsidion.5 version of this sdk.
 
 ### 1. install obsidion wallet sdk
 
 ```shell
-pnpm i @shieldswap/wallet-sdk@0.76.1-next.12
+pnpm i @nemi-fi/wallet-sdk@0.85.0-obsidion.5
 ```
 
 ### 2. how to use sdk
 
 ```tsx
-import { AztecWalletSdk, obsidion } from "@shieldswap/wallet-sdk"
-import { Contract } from "@shieldswap/wallet-sdk/eip1193"
+import { AztecWalletSdk, obsidion } from "@nemi-fi/wallet-sdk"
+import { Contract } from "@nemi-fi/wallet-sdk/eip1193"
 import { TokenContract, TokenContractArtifact } from "@aztec/noir-contracts.js/Token"
 
-const NODE_URL = "http://localhost:8080" // or "http://35.227.171.86:8080" ( devnet )
-const pxe = createPXEClient(NODE_URL)
+// const NODE_URL = "http://localhost:8080"
+const NODE_URL = "https://registry.obsidion.xyz/node"
 
-// reown ( formerly wallet connect ) project id
-const PROJECT_ID = "067a11239d95dd939ee98ea22bde21da"
+const WALLET_URL = "https://app.obsidion.xyz"
 
 const sdk = new AztecWalletSdk({
   aztecNode: NODE_URL,
-  connectors: [obsidion({ projectId: PROJECT_ID })],
+  connectors: [obsidion({ walletUrl: WALLET_URL })],
 })
 
 // example method that does...
@@ -59,11 +59,36 @@ For more details, see the [src/example.tsx](./src/example.tsx)
 
 ## Configuration & Tools
 
-### Change Sandbox URL & L1 RPC URL
+### Networks
 
-it's recommended to develop with your own local sandbox if you can as devnet with our hosted pxe at
-`https://pxe.obsidion.xyz` is still slower and unstable. you can switch network to sandbox in
-Settings > Networks in the Obsidion Wallet UI.
+Obsiidon App offeres three default networks below
+
+#### Sandbox ( Browser PXE )
+
+- Browser PXE
+- Proving Disabled
+  - You can enable proving by setting `prover_enabled` to `true` in local storage.
+- Node URL: http://localhost:8080
+- L1 RPC URL: http://localhost:8545
+
+#### Sandbox ( Remote PXE )
+
+- Docker PXE in cloud
+- Proving Disabled
+- Node URL: http://pxe.obsidion.xyz/sandbox
+- L1 RPC URL: http://pxe.obsidion.xyz/sandbox-l1
+
+#### Testnet ( Browser PXE )
+
+- Browser PXE
+- Proving Enabled
+- Node URL: https://registry.obsidion.xyz/node (http://34.169.170.55:8080 )
+- L1 RPC URL: http://34.169.72.63:8545
+
+### Custom Networks
+
+You can add custom networks to the Obsidion App. To do so, go to network settings, click on the
+`Add Network` button and provide URLSs. \*Docker PXE is not supported.
 
 ## Advanced Mode
 
@@ -103,26 +128,6 @@ view notes specific to each account.
 
 ## Troubleshooting
 
-### Wallet Connect Issues
-
-example:
-
-```shell
-{context: 'client'}  Error: No matching key. history: 1740320789580213
-```
-
-If you encounter any error with wallet connect, pleasetry the following:
-
-1. disconnect() with `sdk.disconnect()`
-2. delete all the cache under indexedDB -> WALLET_CONNECT_V2_INDEXED_DB in local storage in your app
-   site.
-3. clear wallet connect cache for wallet site too.
-
-### simulate() with `aztec_call` not working
-
-If simulate() with `aztec_call` not working, and it's not resolved even after clearing wallet
-connect cache, one of the followings might be the cause.
-
 #### 1. Wallet Tab Closed
 
 If wallet tab, e.g. app.obsidion.xyz, is closed, simulation rpc call gets drop. Make sure you keep
@@ -147,5 +152,6 @@ for more help and feedback.
 ## Run example app
 
 ```shell
+pnpm i
 pnpm dev
 ```

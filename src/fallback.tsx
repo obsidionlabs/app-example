@@ -1,4 +1,4 @@
-import { toast, ToastContent, ToastOptions } from "react-toastify"
+import { toast, type ToastContent, type ToastOptions } from "react-toastify"
 
 interface ConfirmToastProps {
   onConfirm: () => void
