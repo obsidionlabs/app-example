@@ -7,12 +7,12 @@
 - Our Node url: https://registry.obsidion.xyz/node
 - aztec-package/sandbox version: _0.85.0-alpha-testnet.2_
 - wallet sdk: https://www.npmjs.com/package/@nemi-fi/wallet-sdk
-  - \*use 0.85.0-obsidion.5 version of this sdk.
+  - \*use 0.85.0-next.1 version of this sdk.
 
 ### 1. install obsidion wallet sdk
 
 ```shell
-pnpm i @nemi-fi/wallet-sdk@0.85.0-obsidion.5
+pnpm i @nemi-fi/wallet-sdk@0.85.0-next.1
 ```
 
 ### 2. how to use sdk
@@ -27,6 +27,7 @@ const NODE_URL = "https://registry.obsidion.xyz/node"
 
 const WALLET_URL = "https://app.obsidion.xyz"
 
+// This should be instantiated outside of any js classes / react components
 const sdk = new AztecWalletSdk({
   aztecNode: NODE_URL,
   connectors: [obsidion({ walletUrl: WALLET_URL })],
