@@ -7,12 +7,12 @@
 - Our Node url: https://registry.obsidion.xyz/node
 - aztec-package/sandbox version: _0.85.0-alpha-testnet.2_
 - wallet sdk: https://www.npmjs.com/package/@nemi-fi/wallet-sdk
-  - \*use 0.85.0-next.2 version of this sdk.
+  - \*use 0.85.0-next.3 version of this sdk.
 
 ### 1. install obsidion wallet sdk
 
 ```shell
-pnpm i @nemi-fi/wallet-sdk@0.85.0-next.2
+pnpm i @nemi-fi/wallet-sdk@0.85.0-next.3
 ```
 
 ### 2. how to use sdk
