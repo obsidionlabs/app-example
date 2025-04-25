@@ -64,27 +64,27 @@ For more details, see the [src/example.tsx](./src/example.tsx)
 
 Obsiidon App offeres three default networks below
 
-#### Sandbox ( Browser PXE )
+#### Sandbox
 
-- Browser PXE
+- PXE: In-Browser
 - Proving Disabled
   - You can enable proving by setting `prover_enabled` to `true` in local storage.
 - Node URL: http://localhost:8080
 - L1 RPC URL: http://localhost:8545
 
-#### Sandbox ( Remote PXE )
+#### Obsidion Devnet
 
-- Docker PXE in cloud
+- PXE: Docker
 - Proving Disabled
 - Node URL: http://pxe.obsidion.xyz/sandbox
 - L1 RPC URL: http://pxe.obsidion.xyz/sandbox-l1
 
-#### Testnet ( Browser PXE )
+#### Testnet
 
-- Browser PXE
+- PXE: In-Browser
 - Proving Enabled
 - Node URL: https://registry.obsidion.xyz/node (http://34.169.170.55:8080 )
-- L1 RPC URL: http://34.169.72.63:8545
+- L1 RPC URL:"https://eth-sepolia.public.blastapi.io"
 
 ### Custom Networks
 
