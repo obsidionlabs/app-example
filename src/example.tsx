@@ -11,7 +11,6 @@ import {
   TextInput,
   Tooltip,
 } from "@mantine/core"
-import { IconCopy } from "@tabler/icons-react"
 import {
   AztecAddress,
   type ContractArtifact,
@@ -30,6 +29,7 @@ class Token extends Contract.fromAztec(TokenContract) {}
 const NODE_URL = "https://registry.obsidion.xyz/node"
 // const WALLET_URL = "http://localhost:5173"
 const WALLET_URL = "https://app.obsidion.xyz"
+// const WALLET_URL = "http://localhost:5173"
 
 const sdk = new AztecWalletSdk({
   aztecNode: NODE_URL,
@@ -425,7 +425,7 @@ export function Example() {
               {({ copied, copy }) => (
                 <Tooltip label={copied ? "Copied" : "Copy"} withArrow position="right">
                   <ActionIcon color={copied ? "blue" : "gray"} onClick={copy} ml={4}>
-                    {copied ? <CheckIcon size={12} /> : <IconCopy size={12} />}
+                    <CheckIcon size={12} />
                   </ActionIcon>
                 </Tooltip>
               )}
