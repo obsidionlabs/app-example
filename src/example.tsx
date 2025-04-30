@@ -22,6 +22,7 @@ import { BatchCall, Contract, type IntentAction } from "@nemi-fi/wallet-sdk/eip1
 import { useAccount } from "@nemi-fi/wallet-sdk/react"
 import { AztecWalletSdk, obsidion } from "@nemi-fi/wallet-sdk"
 import { formatUnits, parseUnits } from "viem"
+import { DEFAULT_DECIMALS } from "./utils/constants"
 
 class Token extends Contract.fromAztec(TokenContract) {}
 
@@ -309,7 +310,7 @@ export function Example() {
     setLoading(true)
 
     try {
-      const deployTx = await Token.deploy(account, account.getAddress(), "Token", "TEST", 18n)
+      const deployTx = await Token.deploy(account, account.getAddress(), "Token", "TEST", DEFAULT_DECIMALS)
         .send()
         .wait({
           timeout: 200000,
@@ -338,7 +339,7 @@ export function Example() {
         address: tokenContract.address.toString(),
         name: "TEST",
         symbol: "TEST",
-        decimals: 18,
+        decimals: DEFAULT_DECIMALS,
       })
     } catch (e) {
       setError("Error minting token")
