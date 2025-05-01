@@ -17,7 +17,7 @@ import {
   type ContractInstanceWithAddress,
   readFieldCompressedString,
 } from "@aztec/aztec.js"
-import { TokenContract, TokenContractArtifact } from "@aztec/noir-contracts.js/Token"
+import { TokenContract, TokenContractArtifact } from "./contracts/Token"
 import { BatchCall, Contract, type IntentAction } from "@nemi-fi/wallet-sdk/eip1193"
 import { useAccount } from "@nemi-fi/wallet-sdk/react"
 import { AztecWalletSdk, obsidion } from "@nemi-fi/wallet-sdk"
@@ -310,7 +310,13 @@ export function Example() {
     setLoading(true)
 
     try {
-      const deployTx = await Token.deploy(account, account.getAddress(), "Token", "TEST", DEFAULT_DECIMALS)
+      const deployTx = await Token.deploy(
+        account,
+        account.getAddress(),
+        "Token",
+        "TEST",
+        DEFAULT_DECIMALS,
+      )
         .send()
         .wait({
           timeout: 200000,
