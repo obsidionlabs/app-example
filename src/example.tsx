@@ -17,7 +17,7 @@ import {
   type ContractInstanceWithAddress,
   readFieldCompressedString,
 } from "@aztec/aztec.js"
-import { TokenContract, TokenContractArtifact } from "./contracts/Token"
+import { TokenContract, TokenContractArtifact } from "@aztec/noir-contracts.js/Token"
 import { BatchCall, Contract, type IntentAction } from "@nemi-fi/wallet-sdk/eip1193"
 import { useAccount } from "@nemi-fi/wallet-sdk/react"
 import { AztecWalletSdk, obsidion } from "@nemi-fi/wallet-sdk"
