@@ -18,7 +18,8 @@ import {
   readFieldCompressedString,
 } from "@aztec/aztec.js"
 import { TokenContract, TokenContractArtifact } from "./contracts/Token"
-import { BatchCall, Contract, type IntentAction } from "@nemi-fi/wallet-sdk/eip1193"
+// import { BatchCall, Contract, type IntentAction } from "@nemi-fi/wallet-sdk/eip1193"
+import { BatchCall, Contract } from "@nemi-fi/wallet-sdk/eip1193"
 import { useAccount } from "@nemi-fi/wallet-sdk/react"
 import { AztecWalletSdk, obsidion } from "@nemi-fi/wallet-sdk"
 import { formatUnits, parseUnits } from "viem"
@@ -26,11 +27,11 @@ import { DEFAULT_DECIMALS } from "./utils/constants"
 
 class Token extends Contract.fromAztec(TokenContract) {}
 
-//const NODE_URL = "http://localhost:8080"
-const NODE_URL = "https://registry.obsidion.xyz/node"
+const NODE_URL = "http://localhost:8080"
+// const NODE_URL = "https://registry.obsidion.xyz/node"
 // const WALLET_URL = "http://localhost:5173"
-const WALLET_URL = "https://app.obsidion.xyz"
-// const WALLET_URL = "http://localhost:5173"
+//const WALLET_URL = "https://app.obsidion.xyz"
+const WALLET_URL = "http://localhost:5173"
 
 const sdk = new AztecWalletSdk({
   aztecNode: NODE_URL,
@@ -242,7 +243,7 @@ export function Example() {
     console.log("sending token")
 
     try {
-      let authwitRequests: IntentAction[] | undefined = undefined
+      let authwitRequests: any[] | undefined = undefined
       if (withAuthWitness) {
         authwitRequests = [
           {
