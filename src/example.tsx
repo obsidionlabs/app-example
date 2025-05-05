@@ -18,7 +18,8 @@ import {
   readFieldCompressedString,
 } from "@aztec/aztec.js"
 import { TokenContract, TokenContractArtifact } from "@aztec/noir-contracts.js/Token"
-import { BatchCall, Contract, type IntentAction } from "@nemi-fi/wallet-sdk/eip1193"
+import { BatchCall, Contract } from "@nemi-fi/wallet-sdk/eip1193"
+import { type IntentAction } from "@nemi-fi/wallet-sdk"
 import { useAccount } from "@nemi-fi/wallet-sdk/react"
 import { AztecWalletSdk, obsidion } from "@nemi-fi/wallet-sdk"
 import { formatUnits, parseUnits } from "viem"
