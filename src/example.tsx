@@ -17,9 +17,8 @@ import {
   type ContractInstanceWithAddress,
   readFieldCompressedString,
 } from "@aztec/aztec.js"
-import { TokenContract, TokenContractArtifact } from "./contracts/Token"
-// import { BatchCall, Contract, type IntentAction } from "@nemi-fi/wallet-sdk/eip1193"
-import { BatchCall, Contract } from "@nemi-fi/wallet-sdk/eip1193"
+import { TokenContract, TokenContractArtifact } from "@aztec/noir-contracts.js/Token"
+import { BatchCall, Contract, type IntentAction } from "@nemi-fi/wallet-sdk/eip1193"
 import { useAccount } from "@nemi-fi/wallet-sdk/react"
 import { AztecWalletSdk, obsidion } from "@nemi-fi/wallet-sdk"
 import { formatUnits, parseUnits } from "viem"
@@ -243,7 +242,7 @@ export function Example() {
     console.log("sending token")
 
     try {
-      let authwitRequests: any[] | undefined = undefined
+      let authwitRequests: IntentAction[] | undefined = undefined
       if (withAuthWitness) {
         authwitRequests = [
           {
