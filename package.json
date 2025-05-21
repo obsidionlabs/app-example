@@ -11,8 +11,8 @@
     "build": "vite build"
   },
   "dependencies": {
-    "@aztec/aztec.js": "0.85.0-alpha-testnet.7",
-    "@aztec/noir-contracts.js": "0.85.0-alpha-testnet.7",
+    "@aztec/aztec.js": "0.86.0-nightly.20250514",
+    "@aztec/noir-contracts.js": "0.86.0-nightly.20250514",
     "@mantine/core": "^7.17.2",
     "@mantine/hooks": "^7.17.2",
     "@mantine/notifications": "^7.17.2",
