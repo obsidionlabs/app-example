@@ -19,7 +19,10 @@
     "composite": true,
     "skipLibCheck": true,
     "jsx": "react-jsx",
-    "verbatimModuleSyntax": true
+    "verbatimModuleSyntax": true,
+    "paths": {
+      "@defi-wonderland/aztec-standards/*": ["./node_modules/@defi-wonderland/aztec-standards/*"]
+    }
   },
   "include": ["src", "src/**/*.json"],
   "exclude": ["node_modules", "trash"]
