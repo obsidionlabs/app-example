@@ -20,7 +20,8 @@ pnpm i @nemi-fi/wallet-sdk@0.85.0-next.3
 ```tsx
 import { AztecWalletSdk, obsidion } from "@nemi-fi/wallet-sdk"
 import { Contract } from "@nemi-fi/wallet-sdk/eip1193"
-import { TokenContract, TokenContractArtifact } from "@aztec/noir-contracts.js/Token"
+import { TokenContract, TokenContractArtifact } from "@defi-wonderland/aztec-standards/current/artifacts/artifacts/Token.js"
+
 
 // const NODE_URL = "http://localhost:8080" // sandbox
 const NODE_URL = "https://registry.obsidion.xyz/node" // testnet
