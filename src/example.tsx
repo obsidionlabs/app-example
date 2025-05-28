@@ -23,7 +23,10 @@ import { useAccount } from "@nemi-fi/wallet-sdk/react"
 import { AztecWalletSdk, obsidion } from "@nemi-fi/wallet-sdk"
 import { formatUnits, parseUnits } from "viem"
 import { DEFAULT_DECIMALS } from "./utils/constants"
-import { TokenContract, TokenContractArtifact } from "@defi-wonderland/aztec-standards/current/artifacts/artifacts/Token.js"
+import {
+  TokenContract,
+  TokenContractArtifact,
+} from "@defi-wonderland/aztec-standards/current/artifacts/artifacts/Token.js"
 
 class Token extends Contract.fromAztec(TokenContract as any) {}
 
@@ -312,10 +315,12 @@ export function Example() {
     try {
       const deployTx = await Token.deploy(
         account,
-        account.getAddress(),
         "Token",
         "TEST",
         DEFAULT_DECIMALS,
+        100e6,
+        account.getAddress(),
+        account.getAddress(),
       )
         .send()
         .wait({
@@ -324,25 +329,26 @@ export function Example() {
 
       console.log("deployTx: ", deployTx)
 
-      const tokenContract = deployTx.contract
-      const mintPrivateTx = await tokenContract.methods
-        .mint_to_private(account.getAddress(), account.getAddress(), 1000e18)
-        .request()
-      const mintPublicTx = await tokenContract.methods
-        .mint_to_public(account.address, 1000e18)
-        .request()
+      // const tokenContract = deployTx.contract
+      // const mintPrivateTx = await tokenContract.methods
+      //   .mint_to_private(account.getAddress(), account.getAddress(), 1000e18)
+      //   .request()
+      // const mintPublicTx = await tokenContract.methods
+      //   .mint_to_public(account.address, 1000e18)
+      //   .request()
 
-      const batchedTx = new BatchCall(account, [mintPrivateTx, mintPublicTx])
-      const batchedTxHash = await batchedTx.send().wait({
-        timeout: 200000,
-      })
-      console.log("batchedTxHash: ", batchedTxHash)
+      // const batchedTx = new BatchCall(account, [mintPrivateTx, mintPublicTx])
+      // const batchedTxHash = await batchedTx.send().wait({
+      //   timeout: 200000,
+      // })
+      // console.log("batchedTxHash: ", batchedTxHash)
 
-      const token = await Token.at(tokenContract.address, account)
+      // const token = await Token.at(tokenContract.address, account)
+      const token = await Token.at(deployTx.contract.address, account)
       setTokenContract(token)
 
       setToken({
-        address: tokenContract.address.toString(),
+        address: token.address.toString(),
         name: "TEST",
         symbol: "TEST",
         decimals: DEFAULT_DECIMALS,
