@@ -32,7 +32,7 @@ class Token extends Contract.fromAztec(TokenContract as any) {}
 
 //const NODE_URL = "http://localhost:8080"
 const NODE_URL = "https://aztec-alpha-testnet-fullnode.zkv.xyz"
-//const WALLET_URL = "http://localhost:4173"
+//const WALLET_URL = "http://localhost:5173"
 const WALLET_URL = "https://app.obsidion.xyz"
 
 const sdk = new AztecWalletSdk({
@@ -86,7 +86,6 @@ export function Example() {
         account &&
         token &&
         tokenContract &&
-        contractForRegister &&
         token.name === "" &&
         token.symbol === "" &&
         token.decimals === 0
@@ -94,9 +93,9 @@ export function Example() {
         console.log("fetching token info...")
 
         const [nameResponse, symbolResponse, decimals] = await Promise.all([
-          tokenContract.methods.public_get_name({}).simulate(),
-          tokenContract.methods.public_get_symbol({}).simulate(),
-          tokenContract.methods.public_get_decimals().simulate(),
+          tokenContract.methods.name().simulate(),
+          tokenContract.methods.symbol().simulate(),
+          tokenContract.methods.decimals().simulate(),
         ])
 
         const name = readFieldCompressedString(nameResponse as any)
@@ -175,7 +174,7 @@ export function Example() {
       setPublicBalance(formatUnits(publicBalance as bigint, token.decimals))
       setPrivateBalance(formatUnits(privateBalance as bigint, token.decimals))
     } catch (e) {
-      setError("Error fetching balances")
+      setError("Error fetching balances" + e)
       console.error("Error fetching balances: ", e)
     } finally {
       setLoadingFetchBalances(false)
@@ -230,6 +229,12 @@ export function Example() {
       return
     }
 
+    if (!contractForRegister) {
+      setError("Contract for register is required")
+      setLoading(false)
+      return
+    }
+
     if (!amount) {
       setError("Amount is required")
       setLoading(false)
@@ -251,7 +256,7 @@ export function Example() {
           {
             caller: account.getAddress(),
             action: await tokenContract.methods
-              .transfer_in_private(
+              .transfer_private_to_private(
                 account.getAddress(),
                 AztecAddress.fromString(recipient),
                 parseUnits(amount.toString(), token.decimals),
@@ -262,7 +267,7 @@ export function Example() {
           {
             caller: account.getAddress(),
             action: await tokenContract.methods
-              .transfer_to_public(
+              .transfer_public_to_public(
                 account.getAddress(),
                 AztecAddress.fromString(recipient),
                 parseUnits(amount.toString(), token.decimals),
@@ -275,13 +280,24 @@ export function Example() {
       console.log("authwitRequests: ", authwitRequests)
 
       const tx = await tokenContract.methods[
-        isPrivate ? "transfer_in_private" : "transfer_in_public"
+        isPrivate ? "transfer_private_to_private" : "transfer_public_to_public"
       ](
         account.getAddress(),
         AztecAddress.fromString(recipient),
         parseUnits(amount.toString(), token.decimals),
         0,
-        withAuthWitness ? { authWitnesses: authwitRequests } : undefined,
+        {
+          // authwitness example ( only for private authwit )
+          authWitnesses: authwitRequests,
+          // register contract example ( for the sake of example, actually no need here )
+          registerContracts: [
+            {
+              address: contractForRegister.address,
+              instance: contractForRegister.instance,
+              artifact: contractForRegister.artifact,
+            },
+          ],
+        },
       )
         .send()
         .wait({
@@ -294,7 +310,7 @@ export function Example() {
       handleFetchBalances()
     } catch (e) {
       console.error("Error sending transaction: ", e)
-      setError("Error sending transaction")
+      setError("Error sending transaction: " + e)
       return
     } finally {
       setLoading(false)
@@ -329,21 +345,6 @@ export function Example() {
 
       console.log("deployTx: ", deployTx)
 
-      // const tokenContract = deployTx.contract
-      // const mintPrivateTx = await tokenContract.methods
-      //   .mint_to_private(account.getAddress(), account.getAddress(), 1000e18)
-      //   .request()
-      // const mintPublicTx = await tokenContract.methods
-      //   .mint_to_public(account.address, 1000e18)
-      //   .request()
-
-      // const batchedTx = new BatchCall(account, [mintPrivateTx, mintPublicTx])
-      // const batchedTxHash = await batchedTx.send().wait({
-      //   timeout: 200000,
-      // })
-      // console.log("batchedTxHash: ", batchedTxHash)
-
-      // const token = await Token.at(tokenContract.address, account)
       const token = await Token.at(deployTx.contract.address, account)
       setTokenContract(token)
 
@@ -354,7 +355,7 @@ export function Example() {
         decimals: DEFAULT_DECIMALS,
       })
     } catch (e) {
-      setError("Error minting token")
+      setError("Error minting token: " + e)
       console.error("Error minting token: ", e)
     } finally {
       setLoading(false)
