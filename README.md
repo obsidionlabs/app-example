@@ -3,16 +3,15 @@
 ## Basic Info
 
 - Obsidion app: https://app.obsidion.xyz/
-- Our hosted PXE url: https://pxe.obsidion.xyz/
-- Our Node url: https://registry.obsidion.xyz/node
-- aztec-package/sandbox version: _0.85.0-alpha-testnet.2_
+- Node url: https://aztec-alpha-testnet-fullnode.zkv.xyz
+- aztec-package/sandbox version: _0.87.2_
 - wallet sdk: https://www.npmjs.com/package/@nemi-fi/wallet-sdk
-  - \*use 0.85.0-next.3 version of this sdk.
+  - \*use 0.87.2-next.2 version of this sdk.
 
 ### 1. install obsidion wallet sdk
 
 ```shell
-pnpm i @nemi-fi/wallet-sdk@0.85.0-next.3
+pnpm i @nemi-fi/wallet-sdk@0.87.2-next.2
 ```
 
 ### 2. how to use sdk
@@ -20,12 +19,13 @@ pnpm i @nemi-fi/wallet-sdk@0.85.0-next.3
 ```tsx
 import { AztecWalletSdk, obsidion } from "@nemi-fi/wallet-sdk"
 import { Contract } from "@nemi-fi/wallet-sdk/eip1193"
-import { TokenContract, TokenContractArtifact } from "@defi-wonderland/aztec-standards/current/artifacts/artifacts/Token.js"
-
+import {
+  TokenContract,
+  TokenContractArtifact,
+} from "@defi-wonderland/aztec-standards/current/artifacts/artifacts/Token.js"
 
 // const NODE_URL = "http://localhost:8080" // sandbox
-const NODE_URL = "https://registry.obsidion.xyz/node" // testnet
-
+const NODE_URL = "https://aztec-alpha-testnet-fullnode.zkv.xyz" // testnet
 const WALLET_URL = "https://app.obsidion.xyz"
 
 // This should be instantiated outside of any js classes / react components
@@ -49,7 +49,10 @@ const exampleMethod = async () => {
   const token = await Token.at(tokenAddress, account.getAddress())
 
   // send tx
-  const tx = await token.methods.transfer(account.getAddress(), 100).send().wait()
+  const tx = await token.methods
+    .transfer_private_to_private(account.getAddress(), 100)
+    .send()
+    .wait()
   // simulate tx
   const balance = await token.methods.balance_of_private(account.getAddress()).simulate()
 }
@@ -58,6 +61,20 @@ exampleMethod()
 ```
 
 For more details, see the [src/example.tsx](./src/example.tsx)
+
+#### Batch Call
+
+````tsx
+			const batchedTx = new BatchCall(
+					aztecAccount,
+					[
+						transferPrivate, // await token.methods.transfer_private_to_private(...).request()
+						transferPublic, // await token.methods.transfer_public_to_public(...).request()
+					]
+				)
+
+         await batchedTx.send().wait({timeout: 200000 })
+```
 
 ## Configuration & Tools
 
@@ -73,24 +90,16 @@ Obsiidon App offeres three default networks below
 - Node URL: http://localhost:8080
 - L1 RPC URL: http://localhost:8545
 
-#### Obsidion Devnet
-
-- PXE: Docker
-- Proving Disabled
-- Node URL: http://pxe.obsidion.xyz/sandbox
-- L1 RPC URL: http://pxe.obsidion.xyz/sandbox-l1
-
 #### Testnet
 
 - PXE: In-Browser
 - Proving Enabled
-- Node URL: https://registry.obsidion.xyz/node (http://34.169.170.55:8080 )
-- L1 RPC URL:"https://eth-sepolia.public.blastapi.io"
+- Node URL: https://aztec-alpha-testnet-fullnode.zkv.xyz
+- L1 RPC URL: "https://eth-sepolia.public.blastapi.io"
 
-### Custom Networks
+#### Custom Networks
 
-You can add custom networks to the Obsidion App. To do so, go to network settings, click on the
-`Add Network` button and provide URLSs. \*Docker PXE is not supported.
+You can edit URLs for each network in the Obsidion App's network settings.
 
 ## Advanced Mode
 
@@ -156,4 +165,4 @@ for more help and feedback.
 ```shell
 pnpm i
 pnpm dev
-```
+````
