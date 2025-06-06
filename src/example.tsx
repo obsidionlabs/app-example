@@ -32,8 +32,8 @@ class Token extends Contract.fromAztec(TokenContract as any) {}
 
 //const NODE_URL = "http://localhost:8080"
 const NODE_URL = "https://aztec-alpha-testnet-fullnode.zkv.xyz"
-//const WALLET_URL = "http://localhost:5173"
-const WALLET_URL = "https://app.obsidion.xyz"
+const WALLET_URL = "http://localhost:5173"
+// const WALLET_URL = "https://app.obsidion.xyz"
 
 const sdk = new AztecWalletSdk({
   aztecNode: NODE_URL,
@@ -183,7 +183,11 @@ export function Example() {
 
   useEffect(() => {
     if (account && tokenContract && token) {
-      handleFetchBalances()
+      // wait 3 seconds
+
+      setTimeout(() => {
+        handleFetchBalances()
+      }, 3000)
     }
   }, [account, tokenContract, token])
 
