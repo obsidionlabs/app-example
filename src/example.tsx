@@ -30,10 +30,10 @@ import {
 
 class Token extends Contract.fromAztec(TokenContract as any) {}
 
-const NODE_URL = "http://localhost:8080"
-// const NODE_URL = "https://aztec-alpha-testnet-fullnode.zkv.xyz"
-const WALLET_URL = "http://localhost:5173"
-// const WALLET_URL = "https://app.obsidion.xyz"
+//const NODE_URL = "http://localhost:8080"
+const NODE_URL = "https://aztec-alpha-testnet-fullnode.zkv.xyz"
+//const WALLET_URL = "http://localhost:5173"
+const WALLET_URL = "https://app.obsidion.xyz"
 
 const sdk = new AztecWalletSdk({
   aztecNode: NODE_URL,
@@ -46,6 +46,8 @@ type TokenType = {
   symbol: string
   decimals: number
 }
+
+let loadingBalances = false
 
 export function Example() {
   const account = useAccount(sdk)
@@ -142,7 +144,8 @@ export function Example() {
   }
 
   const handleFetchBalances = async () => {
-    if (loadingFetchBalances) return
+    if (loadingFetchBalances || loadingBalances) return
+    loadingBalances = true
     setLoadingFetchBalances(true)
     setError(null)
     console.log("fetching balances...")
@@ -178,6 +181,7 @@ export function Example() {
       console.error("Error fetching balances: ", e)
     } finally {
       setLoadingFetchBalances(false)
+      loadingBalances = false
     }
   }
 
