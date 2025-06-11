@@ -30,10 +30,10 @@ import {
 
 class Token extends Contract.fromAztec(TokenContract as any) {}
 
-const NODE_URL = "http://localhost:8080"
-//const NODE_URL = "https://aztec-alpha-testnet-fullnode.zkv.xyz"
-const WALLET_URL = "http://localhost:5173"
-/// const WALLET_URL = "https://app.obsidion.xyz"
+//const NODE_URL = "http://localhost:8080"
+const NODE_URL = "https://aztec-alpha-testnet-fullnode.zkv.xyz"
+//const WALLET_URL = "http://localhost:5173"
+const WALLET_URL = "https://app.obsidion.xyz"
 
 const sdk = new AztecWalletSdk({
   aztecNode: NODE_URL,
@@ -169,7 +169,12 @@ export function Example() {
     }
     try {
       const [privateBalance, publicBalance] = await Promise.all([
-        tokenContract.methods.balance_of_private(account.getAddress()).simulate(),
+        tokenContract.methods
+          .balance_of_private(account.getAddress(), {
+            // example of registering a sender ( no need actually )
+            registerSenders: [account.address],
+          })
+          .simulate(),
         tokenContract.methods.balance_of_public(account.getAddress()).simulate(),
       ])
       console.log("privateBalance: ", privateBalance)

@@ -64,16 +64,13 @@ For more details, see the [src/example.tsx](./src/example.tsx)
 
 #### Batch Call
 
-````tsx
-			const batchedTx = new BatchCall(
-					aztecAccount,
-					[
-						transferPrivate, // await token.methods.transfer_private_to_private(...).request()
-						transferPublic, // await token.methods.transfer_public_to_public(...).request()
-					]
-				)
+```tsx
+const batchedTx = new BatchCall(aztecAccount, [
+  transferPrivate, // await token.methods.transfer_private_to_private(...).request()
+  transferPublic, // await token.methods.transfer_public_to_public(...).request()
+])
 
-         await batchedTx.send().wait({timeout: 200000 })
+await batchedTx.send().wait({ timeout: 200000 })
 ```
 
 ## Configuration & Tools
@@ -165,4 +162,4 @@ for more help and feedback.
 ```shell
 pnpm i
 pnpm dev
-````
+```
