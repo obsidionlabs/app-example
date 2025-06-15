@@ -191,15 +191,15 @@ export function Example() {
     }
   }
 
-  useEffect(() => {
-    if (account && tokenContract && token) {
-      // wait 3 seconds
+  // useEffect(() => {
+  //   if (account && tokenContract && token) {
+  //     // wait 3 seconds
 
-      setTimeout(() => {
-        handleFetchBalances()
-      }, 3000)
-    }
-  }, [account, tokenContract, token])
+  //     setTimeout(() => {
+  //       handleFetchBalances()
+  //     }, 3000)
+  //   }
+  // }, [account, tokenContract, token])
 
   useEffect(() => {
     if (token && account) {
