@@ -236,11 +236,14 @@ export function Example() {
     }
 
     try {
-      const authwit = {
+      const authwit: IntentAction = {
         caller: account.getAddress(),
-        action: await tokenContract.methods
-          .transfer_public_to_public(account.getAddress(), account.getAddress(), 5e6, 0)
-          .request(),
+        action: tokenContract.methods.transfer_public_to_public(
+          account.getAddress(),
+          account.getAddress(),
+          5e6,
+          0,
+        ),
       }
 
       const authwitTx = await account.setPublicAuthWit(authwit, true)
@@ -306,25 +309,21 @@ export function Example() {
         authwitRequests = [
           {
             caller: account.getAddress(),
-            action: await tokenContract.methods
-              .transfer_private_to_private(
-                account.getAddress(),
-                AztecAddress.fromString(recipient),
-                parseUnits(amount.toString(), token.decimals),
-                0,
-              )
-              .request(),
+            action: tokenContract.methods.transfer_private_to_private(
+              account.getAddress(),
+              AztecAddress.fromString(recipient),
+              parseUnits(amount.toString(), token.decimals),
+              0,
+            ),
           },
           {
             caller: account.getAddress(),
-            action: await tokenContract.methods
-              .transfer_public_to_public(
-                account.getAddress(),
-                AztecAddress.fromString(recipient),
-                parseUnits(amount.toString(), token.decimals),
-                0,
-              )
-              .request(),
+            action: tokenContract.methods.transfer_public_to_public(
+              account.getAddress(),
+              AztecAddress.fromString(recipient),
+              parseUnits(amount.toString(), token.decimals),
+              0,
+            ),
           },
         ]
       }
@@ -408,12 +407,14 @@ export function Example() {
       const token = await Token.at(deployTx.contract.address, account)
 
       // example of batch tx
-      const mintPrivateCall = await token.methods
-        .mint_to_private(account.getAddress(), account.getAddress(), 100e6)
-        .request()
-      const mintPublicCall = await token.methods
-        .mint_to_public(account.getAddress(), 100e6)
-        .request()
+      const mintPrivateCall = token.methods.mint_to_private(
+        account.getAddress(),
+        account.getAddress(),
+        100e6,
+      )
+
+      const mintPublicCall = token.methods.mint_to_public(account.getAddress(), 100e6)
+
       const batchTx = new BatchCall(account, [mintPrivateCall, mintPublicCall])
 
       const batchTxResult = await batchTx.send().wait({
