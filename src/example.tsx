@@ -18,7 +18,7 @@ import {
   readFieldCompressedString,
 } from "@aztec/aztec.js"
 import { BatchCall, Contract } from "@nemi-fi/wallet-sdk/eip1193"
-import { type IntentAction } from "@nemi-fi/wallet-sdk"
+import { chains, type IntentAction } from "@nemi-fi/wallet-sdk"
 import { useAccount } from "@nemi-fi/wallet-sdk/react"
 import { AztecWalletSdk, obsidion } from "@nemi-fi/wallet-sdk"
 import { formatUnits, parseUnits } from "viem"
@@ -133,6 +133,7 @@ export function Example() {
       {
         type: "ARC20",
         options: {
+          chainId: chains.sandbox.id.toString(),
           address: token.address,
           name: token.name,
           symbol: token.symbol,
@@ -149,8 +150,8 @@ export function Example() {
     setLoadingFetchBalances(true)
     setError(null)
     console.log("fetching balances...")
-    console.log("account: ", account)
-    console.log("tokenContract: ", tokenContract)
+    console.log("account: ", account?.address.toString())
+    console.log("tokenContract: ", tokenContract?.address.toString())
 
     if (!account) {
       setError("Account not found")
@@ -169,7 +170,12 @@ export function Example() {
     }
     try {
       const [privateBalance, publicBalance] = await Promise.all([
-        tokenContract.methods.balance_of_private(account.getAddress()).simulate(),
+        tokenContract.methods
+          .balance_of_private(account.getAddress(), {
+            // example of registering a sender ( no need actually )
+            registerSenders: [account.address],
+          })
+          .simulate(),
         tokenContract.methods.balance_of_public(account.getAddress()).simulate(),
       ])
       console.log("privateBalance: ", privateBalance)
@@ -213,6 +219,46 @@ export function Example() {
       initTokenContract()
     }
   }, [token, account])
+
+  const setPublicAuthWitness = async () => {
+    setLoading(true)
+    setError(null)
+    setTxHash(null)
+
+    if (!account) {
+      setError("Account not found")
+      return
+    }
+
+    if (!tokenContract) {
+      setError("Token contract not found")
+      return
+    }
+
+    try {
+      const authwit: IntentAction = {
+        caller: account.getAddress(),
+        action: tokenContract.methods.transfer_public_to_public(
+          account.getAddress(),
+          account.getAddress(),
+          5e6,
+          0,
+        ),
+      }
+
+      const authwitTx = await account.setPublicAuthWit(authwit, true)
+      const tx = await authwitTx.send().wait({
+        timeout: 200000,
+      })
+      console.log("tx: ", tx)
+      setTxHash(tx.txHash.toString())
+    } catch (e) {
+      console.error("Error setting public auth witness: ", e)
+      setError("Error setting public auth witness: " + e)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handleSendTx = async (isPrivate: boolean, withAuthWitness: boolean = false) => {
     setLoading(true)
@@ -263,25 +309,21 @@ export function Example() {
         authwitRequests = [
           {
             caller: account.getAddress(),
-            action: await tokenContract.methods
-              .transfer_private_to_private(
-                account.getAddress(),
-                AztecAddress.fromString(recipient),
-                parseUnits(amount.toString(), token.decimals),
-                0,
-              )
-              .request(),
+            action: tokenContract.methods.transfer_private_to_private(
+              account.getAddress(),
+              AztecAddress.fromString(recipient),
+              parseUnits(amount.toString(), token.decimals),
+              0,
+            ),
           },
           {
             caller: account.getAddress(),
-            action: await tokenContract.methods
-              .transfer_public_to_public(
-                account.getAddress(),
-                AztecAddress.fromString(recipient),
-                parseUnits(amount.toString(), token.decimals),
-                0,
-              )
-              .request(),
+            action: tokenContract.methods.transfer_public_to_public(
+              account.getAddress(),
+              AztecAddress.fromString(recipient),
+              parseUnits(amount.toString(), token.decimals),
+              0,
+            ),
           },
         ]
       }
@@ -337,14 +379,23 @@ export function Example() {
     setLoading(true)
 
     try {
-      const deployTx = await Token.deploy(
-        account,
+      const deployTx = await Token.deployWithOpts(
+        {
+          account,
+          method: "constructor_with_minter",
+        },
         "Token",
         "TEST",
         DEFAULT_DECIMALS,
-        100e6,
         account.getAddress(),
         account.getAddress(),
+        {
+          // extra option params examples
+          extraCalls: [], // its possible to pass extra calls here, e.g. await contract.methods.func(...).request()
+          capsules: [],
+          registerContracts: [],
+          authWitnesses: [],
+        },
       )
         .send()
         .wait({
@@ -354,6 +405,23 @@ export function Example() {
       console.log("deployTx: ", deployTx)
 
       const token = await Token.at(deployTx.contract.address, account)
+
+      // example of batch tx
+      const mintPrivateCall = token.methods.mint_to_private(
+        account.getAddress(),
+        account.getAddress(),
+        100e6,
+      )
+
+      const mintPublicCall = token.methods.mint_to_public(account.getAddress(), 100e6)
+
+      const batchTx = new BatchCall(account, [mintPrivateCall, mintPublicCall])
+
+      const batchTxResult = await batchTx.send().wait({
+        timeout: 200000,
+      })
+      console.log("batchTxResult: ", batchTxResult)
+
       setTokenContract(token)
 
       setToken({
@@ -657,7 +725,7 @@ export function Example() {
                   />
 
                   <Checkbox
-                    label="Include Auth Witness (for demo purposes)"
+                    label="Include Private Auth Witness (for demo purposes)"
                     checked={withAuthWitness}
                     onChange={(e) => setWithAuthWitness(e.target.checked)}
                     styles={{ label: { fontSize: "14px" } }}
@@ -680,6 +748,13 @@ export function Example() {
                       onClick={() => handleSendTx(false, withAuthWitness)}
                     >
                       Send Public
+                    </Button>
+                    <Button
+                      variant="light"
+                      disabled={loading}
+                      onClick={() => setPublicAuthWitness()}
+                    >
+                      Set Public AuthWit
                     </Button>
                   </div>
 
