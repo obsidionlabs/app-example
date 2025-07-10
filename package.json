@@ -11,8 +11,8 @@
     "build": "vite build"
   },
   "dependencies": {
-    "@aztec/aztec.js": "1.0.0-nightly.20250706",
-    "@aztec/noir-contracts.js": "1.0.0-nightly.20250706",
+    "@aztec/aztec.js": "v1.0.0-staging.4",
+    "@aztec/noir-contracts.js": "v1.0.0-staging.4",
     "@defi-wonderland/aztec-standards": "0.0.0-73e84dcc",
     "@mantine/core": "^7.17.2",
     "@mantine/hooks": "^7.17.2",
