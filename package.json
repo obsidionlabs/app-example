@@ -13,11 +13,12 @@
   "dependencies": {
     "@aztec/aztec.js": "1.1.2",
     "@aztec/noir-contracts.js": "1.1.2",
+    "@obsidion/sdk": "workspace:*",
     "@defi-wonderland/aztec-standards": "0.0.0-73e84dcc",
     "@mantine/core": "^7.17.2",
     "@mantine/hooks": "^7.17.2",
     "@mantine/notifications": "^7.17.2",
-    "@nemi-fi/wallet-sdk": "0.87.2-next.2",
+    "@nemi-fi/wallet-sdk": "file:../../../wallet-sdk",
     "@tabler/icons-react": "^3.31.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
