@@ -426,21 +426,6 @@ export function Example() {
 
       setTokenContract(token)
 
-      // example of batch tx
-      const mintPrivateCall = token.methods.mint_to_private(
-        account.getAddress(),
-        account.getAddress(),
-        100e6,
-      )
-      const mintPublicCall = token.methods.mint_to_public(account.getAddress(), 100e6)
-
-      const batchTx = new BatchCall(account, [mintPrivateCall, mintPublicCall])
-      const batchTxResult = await batchTx.send().wait({
-        timeout: 200000,
-      })
-
-      console.log("batchTxResult: ", batchTxResult)
-
       setToken({
         address: token.address.toString(),
         name: "TEST",
