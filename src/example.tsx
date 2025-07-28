@@ -22,18 +22,15 @@ import { chains, type IntentAction } from "@nemi-fi/wallet-sdk"
 import { useAccount } from "@nemi-fi/wallet-sdk/react"
 import { AztecWalletSdk, obsidion } from "@nemi-fi/wallet-sdk"
 import { formatUnits, parseUnits } from "viem"
+import { TokenContract, TokenContractArtifact } from "./utils/Token"
 import { DEFAULT_DECIMALS } from "./utils/constants"
-import {
-  TokenContract,
-  TokenContractArtifact,
-} from "@defi-wonderland/aztec-standards/current/artifacts/artifacts/Token.js"
 
 class Token extends Contract.fromAztec(TokenContract as any) {}
 
-//const NODE_URL = "http://localhost:8080"
-const NODE_URL = "https://aztec-alpha-testnet-fullnode.zkv.xyz"
-//const WALLET_URL = "http://localhost:5173"
-const WALLET_URL = "https://app.obsidion.xyz"
+const NODE_URL = "http://localhost:8080"
+// const NODE_URL = "https://aztec-alpha-testnet-fullnode.zkv.xyz"
+const WALLET_URL = "http://localhost:5173"
+// const WALLET_URL = "https://app.obsidion.xyz"
 
 const sdk = new AztecWalletSdk({
   aztecNode: NODE_URL,
@@ -168,31 +165,36 @@ export function Example() {
       setLoadingFetchBalances(false)
       return
     }
+
     try {
-      const [privateBalance, publicBalance] = await Promise.all([
-        tokenContract.methods
-          .balance_of_private(account.getAddress(), {
-            // example of registering a sender ( no need actually )
-            registerSenders: [account.address],
-          })
-          .simulate(),
-        tokenContract.methods.balance_of_public(account.getAddress()).simulate(),
-      ])
+      const privateBalance = await tokenContract.methods
+        .balance_of_private(account.getAddress())
+        .simulate()
+
       console.log("privateBalance: ", privateBalance)
-      console.log("publicBalance: ", publicBalance)
-      setPublicBalance(formatUnits(publicBalance as bigint, token.decimals))
       setPrivateBalance(formatUnits(privateBalance as bigint, token.decimals))
     } catch (e) {
       setError("Error fetching balances" + e)
       console.error("Error fetching balances: ", e)
-    } finally {
-      setLoadingFetchBalances(false)
-      loadingBalances = false
     }
+
+    try {
+      const publicBalance = await tokenContract.methods
+        .balance_of_public(account.getAddress())
+        .simulate()
+      console.log("publicBalance: ", publicBalance)
+      setPublicBalance(formatUnits(publicBalance as bigint, token.decimals))
+    } catch (e) {
+      setError("Error fetching balances" + e)
+      console.error("Error fetching balances: ", e)
+    }
+
+    setLoadingFetchBalances(false)
+    loadingBalances = false
   }
 
   useEffect(() => {
-    if (account && tokenContract && token) {
+    if (account && tokenContract && token && token.decimals !== 0) {
       // wait 3 seconds
 
       setTimeout(() => {
@@ -391,7 +393,7 @@ export function Example() {
         account.getAddress(),
         {
           // extra option params examples
-          extraCalls: [], // its possible to pass extra calls here, e.g. await contract.methods.func(...).request()
+          experimental_extraTxRequests: [], // its possible to pass extra tx request here, e.g. await contract.methods.func(...).request()
           capsules: [],
           registerContracts: [],
           authWitnesses: [],
@@ -423,6 +425,21 @@ export function Example() {
       console.log("batchTxResult: ", batchTxResult)
 
       setTokenContract(token)
+
+      // example of batch tx
+      const mintPrivateCall = token.methods.mint_to_private(
+        account.getAddress(),
+        account.getAddress(),
+        100e6,
+      )
+      const mintPublicCall = token.methods.mint_to_public(account.getAddress(), 100e6)
+
+      const batchTx = new BatchCall(account, [mintPrivateCall, mintPublicCall])
+      const batchTxResult = await batchTx.send().wait({
+        timeout: 200000,
+      })
+
+      console.log("batchTxResult: ", batchTxResult)
 
       setToken({
         address: token.address.toString(),
