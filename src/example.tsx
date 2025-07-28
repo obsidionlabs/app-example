@@ -168,7 +168,9 @@ export function Example() {
 
     try {
       const privateBalance = await tokenContract.methods
-        .balance_of_private(account.getAddress())
+        .balance_of_private(account.getAddress(), {
+          registerSenders: [account.address],
+        })
         .simulate()
 
       console.log("privateBalance: ", privateBalance)

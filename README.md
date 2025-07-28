@@ -4,14 +4,14 @@
 
 - Obsidion app: https://app.obsidion.xyz/
 - Node url: https://aztec-alpha-testnet-fullnode.zkv.xyz
-- aztec-package/sandbox version: _0.87.2_
+- aztec-package/sandbox version: _1.0.0_
 - wallet sdk: https://www.npmjs.com/package/@nemi-fi/wallet-sdk
-  - \*use 0.87.2-next.2 version of this sdk.
+  - \*use 1.0.0 version of this sdk.
 
 ### 1. install obsidion wallet sdk
 
 ```shell
-pnpm i @nemi-fi/wallet-sdk@0.87.2-next.2
+pnpm i @nemi-fi/wallet-sdk@1.0.0
 ```
 
 ### 2. how to use sdk
@@ -71,6 +71,49 @@ const batchedTx = new BatchCall(aztecAccount, [
 ])
 
 await batchedTx.send().wait({ timeout: 200000 })
+```
+
+#### Token Authwit
+
+```tsx
+      const tx = await deposit.methods.deposit_token(
+        account.getAddress(),
+        amount
+        {
+          // authwitness example ( only for private authwit )
+          authWitnesses: {
+            caller: account.getAddress(),
+            action: tokenContract.methods.transfer_private_to_private(
+              account.getAddress(),
+              AztecAddress.fromString(recipient),
+              parseUnits(amount.toString(), token.decimals),
+              0,
+            ),
+          } as IntentAction,
+        },
+      )
+        .send()
+        .wait({
+          timeout: 200000,
+        })
+
+```
+
+#### Register Contract and Sender
+
+```tsx
+const privateBalance = await tokenContract.methods
+  .balance_of_private(account.getAddress(), {
+    registerSenders: [account.address],
+    registerContracts: [
+      {
+        address: contractForRegister.address,
+        instance: contractForRegister.instance,
+        artifact: contractForRegister.artifact,
+      } as RegisterContract,
+    ],
+  })
+  .simulate()
 ```
 
 ## Configuration & Tools
