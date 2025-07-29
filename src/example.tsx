@@ -22,20 +22,24 @@ import { chains, type IntentAction } from "@nemi-fi/wallet-sdk"
 import { useAccount } from "@nemi-fi/wallet-sdk/react"
 import { AztecWalletSdk, obsidion } from "@nemi-fi/wallet-sdk"
 import { formatUnits, parseUnits } from "viem"
-import { TokenContract, TokenContractArtifact } from "./utils/Token"
-import { DEFAULT_DECIMALS } from "./utils/constants"
+import {
+  TokenContract,
+  TokenContractArtifact,
+} from "@defi-wonderland/aztec-standards/current/artifacts/artifacts/Token.js"
 
 class Token extends Contract.fromAztec(TokenContract as any) {}
 
-const NODE_URL = "http://localhost:8080"
-// const NODE_URL = "https://aztec-alpha-testnet-fullnode.zkv.xyz"
-const WALLET_URL = "http://localhost:5173"
-// const WALLET_URL = "https://app.obsidion.xyz"
+//const NODE_URL = "http://localhost:8080"
+const NODE_URL = "https://aztec-alpha-testnet-fullnode.zkv.xyz"
+//const WALLET_URL = "http://localhost:5173"
+const WALLET_URL = "https://app.obsidion.xyz"
 
 const sdk = new AztecWalletSdk({
   aztecNode: NODE_URL,
   connectors: [obsidion({ walletUrl: WALLET_URL })],
 })
+
+export const DEFAULT_DECIMALS = 6
 
 type TokenType = {
   address: string
@@ -245,7 +249,7 @@ export function Example() {
         action: tokenContract.methods.transfer_public_to_public(
           account.getAddress(),
           account.getAddress(),
-          5e6,
+          5 * 10 ** DEFAULT_DECIMALS,
           0,
         ),
       }
@@ -414,10 +418,13 @@ export function Example() {
       const mintPrivateCall = token.methods.mint_to_private(
         account.getAddress(),
         account.getAddress(),
-        100e6,
+        100 * 10 ** DEFAULT_DECIMALS,
       )
 
-      const mintPublicCall = token.methods.mint_to_public(account.getAddress(), 100e6)
+      const mintPublicCall = token.methods.mint_to_public(
+        account.getAddress(),
+        100 * 10 ** DEFAULT_DECIMALS,
+      )
 
       const batchTx = new BatchCall(account, [mintPrivateCall, mintPublicCall])
 
