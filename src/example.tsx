@@ -31,7 +31,7 @@ class Token extends Contract.fromAztec(TokenContract as any) {}
 
 //const NODE_URL = "http://localhost:8080"
 const NODE_URL = "https://aztec-alpha-testnet-fullnode.zkv.xyz"
-//const WALLET_URL = "http://localhost:5173"
+// const WALLET_URL = "http://localhost:5173"
 const WALLET_URL = "https://app.obsidion.xyz"
 
 const sdk = new AztecWalletSdk({

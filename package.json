@@ -14,7 +14,7 @@
     "@aztec/aztec.js": "1.1.2",
     "@aztec/noir-contracts.js": "1.1.2",
     "@obsidion/sdk": "workspace:*",
-    "@defi-wonderland/aztec-standards": "0.0.0-73e84dcc",
+    "@defi-wonderland/aztec-standards": "0.0.0-83476cda",
     "@mantine/core": "^7.17.2",
     "@mantine/hooks": "^7.17.2",
     "@mantine/notifications": "^7.17.2",
