@@ -11,13 +11,12 @@
     "build": "vite build"
   },
   "dependencies": {
-    "@aztec/aztec.js": "0.87.2",
-    "@aztec/noir-contracts.js": "0.87.2",
-    "@defi-wonderland/aztec-standards": "0.0.0-73e84dcc",
+    "@aztec/aztec.js": "1.1.2",
+    "@defi-wonderland/aztec-standards": "0.0.0-83476cda",
     "@mantine/core": "^7.17.2",
     "@mantine/hooks": "^7.17.2",
     "@mantine/notifications": "^7.17.2",
-    "@nemi-fi/wallet-sdk": "0.87.2-next.2",
+    "@nemi-fi/wallet-sdk": "1.0.0",
     "@tabler/icons-react": "^3.31.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
@@ -56,6 +55,6 @@
     "vite-plugin-resolve": "^2.5.2"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=20.10.0"
   }
 }
