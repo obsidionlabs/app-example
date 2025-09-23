@@ -3,7 +3,7 @@
 ## Basic Info
 
 - Obsidion app: https://app.obsidion.xyz/
-- Node url: https://aztec-alpha-testnet-fullnode.zkv.xyz
+- Node url: https://aztec-testnet-fullnode.zkv.xyz
 - aztec-package/sandbox version: _1.0.0_
 - wallet sdk: https://www.npmjs.com/package/@nemi-fi/wallet-sdk
   - \*use 1.0.0 version of this sdk.
@@ -25,7 +25,7 @@ import {
 } from "@defi-wonderland/aztec-standards/current/artifacts/artifacts/Token.js"
 
 // const NODE_URL = "http://localhost:8080" // sandbox
-const NODE_URL = "https://aztec-alpha-testnet-fullnode.zkv.xyz" // testnet
+const NODE_URL = "https://aztec-testnet-fullnode.zkv.xyz" // testnet
 const WALLET_URL = "https://app.obsidion.xyz"
 
 // This should be instantiated outside of any js classes / react components
@@ -134,7 +134,7 @@ Obsiidon App offeres three default networks below
 
 - PXE: In-Browser
 - Proving Enabled
-- Node URL: https://aztec-alpha-testnet-fullnode.zkv.xyz
+- Node URL: https://aztec-testnet-fullnode.zkv.xyz
 - L1 RPC URL: "https://eth-sepolia.public.blastapi.io"
 
 #### Custom Networks
