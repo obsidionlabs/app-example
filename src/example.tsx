@@ -15,6 +15,8 @@ import {
   AztecAddress,
   type ContractArtifact,
   type ContractInstanceWithAddress,
+  loadContractArtifact,
+  type NoirCompiledContract,
   readFieldCompressedString,
 } from "@aztec/aztec.js"
 import { BatchCall, Contract } from "@nemi-fi/wallet-sdk/eip1193"
@@ -22,17 +24,22 @@ import { chains, type IntentAction } from "@nemi-fi/wallet-sdk"
 import { useAccount } from "@nemi-fi/wallet-sdk/react"
 import { AztecWalletSdk, obsidion } from "@nemi-fi/wallet-sdk"
 import { formatUnits, parseUnits } from "viem"
-import {
-  TokenContract,
-  TokenContractArtifact,
-} from "@defi-wonderland/aztec-standards/current/artifacts/artifacts/Token.js"
+// import {
+//   TokenContract,
+//   TokenContractArtifact,
+// } from "@defi-wonderland/aztec-standards/current/artifacts/artifacts/Token.js"
+import { TokenContract } from "./token.js"
+import TokenContractArtifactJson from "./token_contract-Token.json"
+const TokenContractArtifact = loadContractArtifact(
+  TokenContractArtifactJson as NoirCompiledContract,
+)
 
 class Token extends Contract.fromAztec(TokenContract as any) {}
 
-//const NODE_URL = "http://localhost:8080"
-const NODE_URL = "https://aztec-testnet-fullnode.zkv.xyz"
-// const WALLET_URL = "http://localhost:5173"
-const WALLET_URL = "https://app.obsidion.xyz"
+const NODE_URL = "http://localhost:8080"
+/// const NODE_URL = "https://aztec-testnet-fullnode.zkv.xyz"
+const WALLET_URL = "http://localhost:5173"
+// const WALLET_URL = "https://app.obsidion.xyz"
 
 const sdk = new AztecWalletSdk({
   aztecNode: NODE_URL,

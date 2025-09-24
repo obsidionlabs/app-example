@@ -7,7 +7,7 @@
     "lint": "yarn lint:eslint && yarn lint:misc --check",
     "lint:eslint": "eslint . --cache --ext js,ts",
     "lint:fix": "yarn lint:eslint --fix && yarn lint:misc --write",
-    "dev": "vite",
+    "dev": "vite --force",
     "build": "vite build"
   },
   "dependencies": {
@@ -16,7 +16,7 @@
     "@mantine/core": "^7.17.2",
     "@mantine/hooks": "^7.17.2",
     "@mantine/notifications": "^7.17.2",
-    "@nemi-fi/wallet-sdk": "1.0.0",
+    "@nemi-fi/wallet-sdk": "file:../../../wallet-sdk",
     "@tabler/icons-react": "^3.31.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
