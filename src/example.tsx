@@ -28,7 +28,7 @@ import { formatUnits, parseUnits } from "viem"
 //   TokenContract,
 //   TokenContractArtifact,
 // } from "@defi-wonderland/aztec-standards/current/artifacts/artifacts/Token.js"
-import { TokenContract } from "./token.js"
+import { TokenContract } from "./Token.js"
 import TokenContractArtifactJson from "./token_contract-Token.json"
 const TokenContractArtifact = loadContractArtifact(
   TokenContractArtifactJson as NoirCompiledContract,
@@ -36,8 +36,8 @@ const TokenContractArtifact = loadContractArtifact(
 
 class Token extends Contract.fromAztec(TokenContract as any) {}
 
-const NODE_URL = "http://localhost:8080"
-/// const NODE_URL = "https://aztec-testnet-fullnode.zkv.xyz"
+//const NODE_URL = "http://localhost:8080"
+const NODE_URL = "https://aztec-testnet-fullnode.zkv.xyz"
 const WALLET_URL = "http://localhost:5173"
 // const WALLET_URL = "https://app.obsidion.xyz"
 
@@ -261,8 +261,11 @@ export function Example() {
         ),
       }
 
-      const authwitTx = await account.setPublicAuthWit(authwit, true)
-      const tx = await authwitTx.send().wait({
+      const authwitTx = (await account.setPublicAuthWit(authwit, true)).send()
+      const txHash = (await authwitTx.getTxHash()).toString()
+      console.log("txHash: ", txHash)
+      setTxHash(txHash)
+      const tx = await authwitTx.wait({
         timeout: 200000,
       })
       console.log("tx: ", tx)
@@ -344,7 +347,7 @@ export function Example() {
       }
       console.log("authwitRequests: ", authwitRequests)
 
-      const tx = await tokenContract.methods[
+      const tx = tokenContract.methods[
         isPrivate ? "transfer_private_to_private" : "transfer_public_to_public"
       ](
         account.getAddress(),
@@ -363,14 +366,17 @@ export function Example() {
             },
           ],
         },
-      )
-        .send()
-        .wait({
-          timeout: 200000,
-        })
-      console.log("tx: ", tx)
+      ).send()
 
-      setTxHash(tx.txHash.toString())
+      const txHash = (await tx.getTxHash()).toString()
+
+      console.log("txHash: ", txHash)
+      setTxHash(txHash)
+
+      await tx.wait({
+        timeout: 200000,
+      })
+
       console.log("fetching balances after sending tx")
       handleFetchBalances()
     } catch (e) {
@@ -794,16 +800,29 @@ export function Example() {
                       style={{
                         display: "flex",
                         justifyContent: "center",
+                        alignItems: "center",
                         gap: "2px",
                         textAlign: "center",
                         padding: "12px",
                         marginTop: "16px",
                       }}
                     >
+                      {loading ? <Loader size="xs" mr={4} /> : null}
                       <Text size="sm" color="dimmed">
                         Transaction Hash:{" "}
                       </Text>
-                      <Text size="sm" color="dimmed">
+                      <Text
+                        size="sm"
+                        color="blue"
+                        component="a"
+                        href={`https://aztecscan.xyz/tx-effects/${txHash}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          textDecoration: "underline",
+                          cursor: "pointer",
+                        }}
+                      >
                         {shortenAddress(txHash)}
                       </Text>
                     </div>
