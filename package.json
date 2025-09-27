@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "@aztec/aztec.js": "2.0.3",
-    "@defi-wonderland/aztec-standards": "0.0.0-83476cda",
+    "@defi-wonderland/aztec-standards": "2.0.3",
     "@mantine/core": "^7.17.2",
     "@mantine/hooks": "^7.17.2",
     "@mantine/notifications": "^7.17.2",
