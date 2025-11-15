@@ -120,7 +120,7 @@ const privateBalance = await tokenContract.methods
 
 ### Networks
 
-Obsiidon App offeres three default networks below
+Obsidion App offeres three default networks below
 
 #### Sandbox
 
