@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "@aztec/aztec.js": "3.0.0-devnet.2",
-    "@nemi-fi/wallet-sdk": "../../../wallet-sdk",
+    "@nemi-fi/wallet-sdk": "github:nemi-fi/wallet-sdk#3.0.0-devnet.2",
     "@defi-wonderland/aztec-standards": "3.0.0-devnet.2",
     "@mantine/core": "^7.17.2",
     "@mantine/hooks": "^7.17.2",
