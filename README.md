@@ -3,15 +3,15 @@
 ## Basic Info
 
 - Obsidion app: https://app.obsidion.xyz/
-- Node url: https://aztec-testnet-fullnode.zkv.xyz
-- aztec-package/sandbox version: _1.0.0_
+- Node url: https://devnet.aztec-labs.com
+- aztec-package/sandbox version: _3.0.0-devnet.2_
 - wallet sdk: https://www.npmjs.com/package/@nemi-fi/wallet-sdk
-  - \*use 1.0.0 version of this sdk.
+  - \*use 3.0.0-devnet.2 version of this sdk.
 
 ### 1. install obsidion wallet sdk
 
 ```shell
-pnpm i @nemi-fi/wallet-sdk@1.0.0
+pnpm i @nemi-fi/wallet-sdk@3.0.0-devnet.2
 ```
 
 ### 2. how to use sdk
@@ -22,10 +22,10 @@ import { Contract } from "@nemi-fi/wallet-sdk/eip1193"
 import {
   TokenContract,
   TokenContractArtifact,
-} from "@defi-wonderland/aztec-standards/current/artifacts/artifacts/Token.js"
+} from "@defi-wonderland/aztec-standards/current/artifacts/Token.js"
 
 // const NODE_URL = "http://localhost:8080" // sandbox
-const NODE_URL = "https://aztec-testnet-fullnode.zkv.xyz" // testnet
+const NODE_URL = "https://devnet.aztec-labs.com" // devnet
 const WALLET_URL = "https://app.obsidion.xyz"
 
 // This should be instantiated outside of any js classes / react components
@@ -129,6 +129,13 @@ Obsidion App offeres three default networks below
   - You can enable proving by setting `prover_enabled` to `true` in local storage.
 - Node URL: http://localhost:8080
 - L1 RPC URL: http://localhost:8545
+
+#### Devnet
+
+- PXE: In-Browser
+- Proving Enabled
+- Node URL: https://devnet.aztec-labs.com
+- L1 RPC URL: "https://eth-sepolia.public.blastapi.io"
 
 #### Testnet
 
