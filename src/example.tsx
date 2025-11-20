@@ -11,12 +11,10 @@ import {
   TextInput,
   Tooltip,
 } from "@mantine/core"
-import {
-  AztecAddress,
-  type ContractArtifact,
-  type ContractInstanceWithAddress,
-  readFieldCompressedString,
-} from "@aztec/aztec.js"
+import { AztecAddress } from "@aztec/aztec.js/addresses"
+import { type ContractArtifact } from "@aztec/aztec.js/abi"
+import { type ContractInstanceWithAddress } from "@aztec/aztec.js/contracts"
+import { readFieldCompressedString } from "@aztec/aztec.js/utils"
 import { BatchCall, Contract } from "@nemi-fi/wallet-sdk/eip1193"
 import { chains, type IntentAction } from "@nemi-fi/wallet-sdk"
 import { useAccount } from "@nemi-fi/wallet-sdk/react"
@@ -29,10 +27,10 @@ import {
 
 class Token extends Contract.fromAztec(TokenContract as any) {}
 
-//const NODE_URL = "http://localhost:8080"
-const NODE_URL = "https://aztec-testnet-fullnode.zkv.xyz"
-//const WALLET_URL = "http://localhost:5173"
-const WALLET_URL = "https://app.obsidion.xyz"
+const NODE_URL = "http://localhost:8080"
+// const NODE_URL = "https://devnet.aztec-labs.com"
+const WALLET_URL = "http://localhost:5173"
+// const WALLET_URL = "https://app.obsidion.xyz"
 
 const sdk = new AztecWalletSdk({
   aztecNode: NODE_URL,
