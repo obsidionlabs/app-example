@@ -415,22 +415,28 @@ export function Example() {
         })
 
       console.log("deployTx: ", deployTx)
+      console.log("deployTx.contract.address: ", deployTx.contract?.address?.toString())
 
-      const token = await Token.at(deployTx.contract.address, account)
+      // const token = await Token.at(deployTx.contract.address, account)
+      const token = deployTx.contract
+
+      console.log("token: ", token)
 
       // example of batch tx
       const mintPrivateCall = token.methods.mint_to_private(
         account.getAddress(),
-        account.getAddress(),
         100 * 10 ** DEFAULT_DECIMALS,
       )
+      console.log("mintPrivateCall: ", mintPrivateCall)
 
       const mintPublicCall = token.methods.mint_to_public(
         account.getAddress(),
         100 * 10 ** DEFAULT_DECIMALS,
       )
+      console.log("mintPublicCall: ", mintPublicCall)
 
       const batchTx = new BatchCall(account, [mintPrivateCall, mintPublicCall])
+      console.log("batchTx: ", batchTx)
 
       const batchTxResult = await batchTx.send().wait({
         timeout: 200000,
